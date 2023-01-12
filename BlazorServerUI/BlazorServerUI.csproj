@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<UserSecretsId>d640bede-d88e-4d69-ac89-0d2102213002</UserSecretsId>
+	</PropertyGroup>
+	
+	<ItemGroup>
+	  <Content Remove="Pages\Extract.razor" />
+	</ItemGroup>
+	
+	<ItemGroup><ProjectReference Include="..\DataLibrary\DataLibrary.csproj" /></ItemGroup>
+	<ItemGroup><PackageReference Include="Microsoft.NET.Build.Containers" Version="0.2.7" /><PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" /></ItemGroup>
+	<ItemGroup><Folder Include="wwwroot\data\zipData\" /></ItemGroup>
+
+</Project>

@@ -1,0 +1,1 @@
+﻿select * from dbo.CecilCounty where IsGroundRent = 1 or IsGroundRent = 0;

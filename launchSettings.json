@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "blazorserverui": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "blazorserverui",
+      "composeLaunchUrl": "https://localhost:{ServicePort}",
+      "serviceActions": {
+        "blazorserverui": "StartDebugging",
+        "db": "StartWithoutDebugging"
+      }
+    }
+  }
+}

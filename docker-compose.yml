@@ -1,0 +1,31 @@
+version: '3.4'
+networks: 
+  groundrentprocessornetwork:
+
+services:
+  db:
+    container_name: mssql
+    image: ${DOCKER_REGISTRY-}9e28798be691ea67f36eddcb897d65bbdb42047b44e11cf00f98e4b8b421a5d7
+    ports: 
+     - 8001:1433
+    environment: 
+     - ACCEPT_EULA=Y
+     - SA_PASSWORD=Mengshangjie01!
+    networks: 
+     - groundrentprocessornetwork
+  blazorserverui:
+    container_name: blazorserverui
+    image: ${DOCKER_REGISTRY-}30d9a0267c21dd4632e026f65f779fe8ec45fd432bd37aac724aeb167177787c
+    build:
+      context: .
+      dockerfile: BlazorServerUI/Dockerfile
+    ports:
+     - 8000:80
+    environment: 
+     - DB_HOST=db
+     - DB_NAME=DockerGroundRentProcessorDb
+     - DB_SA_PASSWORD=Mengshangjie01!
+    networks: 
+     - groundrentprocessornetwork
+    depends_on: 
+     - db

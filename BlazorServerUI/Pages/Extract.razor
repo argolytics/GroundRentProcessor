@@ -1,0 +1,286 @@
+﻿@page "/extract"
+@using System.IO
+@using AutoMapper;
+@using DataLibrary.DbAccess
+@using DataLibrary.DbServices
+@using DataLibrary.Dtos;
+@using DataLibrary.Models
+@using DataLibrary.Services
+@using Microsoft.AspNetCore.Http
+@using System.Globalization
+@using System.Text.Json
+@using System.IO.Compression;
+@using DataLibrary.Services.SDATScrapers;
+@inject IDataContext dataContext
+@inject IMapper mapper
+@inject MontgomeryCountyDataServiceFactory montgomeryCountyDataServiceFactory
+@inject CecilCountyDataServiceFactory cecilCountyDataServiceFactory
+
+<div class="row mb-3 mt-3">
+    <div class="container">
+        <div>
+            <InputFile OnChange="OnInputFileChange" multiple></InputFile>
+            <button class="btn btn-primary" type="submit" @onclick="UploadToLocal">UploadToLocal</button>
+            @*<button class="btn btn-secondary" type="submit" @onclick="ProcessAdobePDF">ProcessAdobePDF</button>*@
+            @*<button class="btn btn-secondary" type="submit" @onclick="ProcessBaltimoreCity">ProcessBaltimoreCity</button>*@
+            @*<button class="btn btn-secondary" type="submit" @onclick="ProcessMontgomeryCounty">ProcessMontgomeryCounty</button>*@
+            <button class="btn btn-secondary" type="submit" @onclick="ProcessCecilCounty">ProcessCecilCounty</button>
+        </div>
+        @if(selectedFiles is not null)
+        {
+            <div class="row mb-3 mt-3">
+                @foreach (var file in files)
+                {
+                    <div class="table-striped">
+                        <p>@file.File.Name</p>
+                        <p>@file.File.ContentType</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<IBrowserFile>? selectedFiles;
+    private List<FileModel> files = new();
+    private string Message = "No file(s) selected";
+    private long maxAllowedBufferSize = 1024 * 1024 * 500;
+    private int count = 0;
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        if(files.Count > 0)
+        { 
+            files = new(); 
+        }
+        selectedFiles = e.GetMultipleFiles();
+        foreach(var selectedFile in selectedFiles)
+        {
+            FileModel file = new();
+            file.File = selectedFile;
+            files.Add(file);
+        }
+        Message = $"{files.Count} file(s) selected";
+        this.StateHasChanged();
+    }
+    private async void UploadToLocal()
+    {
+        foreach (var file in files)
+        {
+            Stream stream = file.File.OpenReadStream(maxAllowedBufferSize);
+            file.UploadPath = Directory.GetCurrentDirectory() + @"\wwwroot\data\" + "uploadId_" + Guid.NewGuid().ToString() + "_" + file.File.Name;
+            FileStream fileStream = File.Create(file.UploadPath);
+            await stream.CopyToAsync(fileStream);
+            fileStream.Close();
+            fileStream.Dispose();
+            stream.Close();
+            stream.Dispose();
+            Console.WriteLine($"{file.File.Name} upload complete.");
+        }
+        Message = $"{files.Count} file(s) uploaded on server";
+        this.StateHasChanged();
+    }
+    //private async void ProcessAdobePDF()
+    //{
+    //    foreach (var file in files)
+    //    {
+    //        var uploadUriResponse = await getUploadUri.Upload();
+    //        var uploadUriResponseString = await uploadUriResponse.Content.ReadAsStringAsync();
+    //        var uploadUriResponseObject = JsonSerializer.Deserialize<FileModel>(uploadUriResponseString);
+    //        file.UploadUri = uploadUriResponseObject.UploadUri;
+    //        file.AssetId = uploadUriResponseObject.AssetId;
+    //        var resup = await uploadPdf.Upload(file).ConfigureAwait(false);
+    //        var resUpString = await resup.Content.ReadAsStringAsync();
+    //        var resExt = await extractPdf.Extract(file).ConfigureAwait(false);
+    //        file.DownloadCheckLocation = resExt.Headers.Location;
+    //        var resExtString = await resExt.Content.ReadAsStringAsync();
+    //        JobStatusModel jsm;
+    //        do
+    //        {
+    //            await Task.Delay(10000);
+    //            var getDownloadStatusResponse = await getDownloadStatus.GetStatus(file).ConfigureAwait(false);
+    //            var getDownloadStatusResponseString = await getDownloadStatusResponse.Content.ReadAsStringAsync();
+    //            jsm = JsonSerializer.Deserialize<JobStatusModel>(getDownloadStatusResponseString);
+    //        } 
+    //        while (jsm.Status != "done");
+
+    //        file.DownloadUri = jsm.Resource.DownloadUri;
+    //        var fileResponse = await downloadPdf.Download(file).ConfigureAwait(false);
+    //        var data = await fileResponse.Content.ReadAsByteArrayAsync();
+    //        file.ZipPath = file.UploadPath.Replace(".pdf", ".zip");
+
+    //        using var memStream = new MemoryStream(data);
+    //        using var filestream = new FileStream(file.ZipPath, FileMode.Create);
+    //        await memStream.CopyToAsync(filestream);
+    //        filestream.Close();
+
+    //        ZipFile.ExtractToDirectory(file.ZipPath, Directory.GetCurrentDirectory() + @"\wwwroot\data\zipData\");
+    //        File.Delete(file.UploadPath);
+    //        File.Delete(file.ZipPath);
+    //        File.Delete(@"C:\Users\Jason\source\repos\AdobePdfProcessorApp\AdobePdfProcessor\wwwroot\data\zipData\structuredData.json");
+
+    //        file.CsvPath = Directory.GetCurrentDirectory() + @"\wwwroot\data\zipData\tables\" + "fileoutpart0.csv";
+    //        using (var streamReader = new StreamReader(file.CsvPath))
+    //        {
+    //            using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
+    //            {
+    //                while (csvReader.Read())
+    //                {
+    //                    using (var uow = dataContext.CreateUnitOfWork())
+    //                    {
+    //                        if (csvReader.Parser.RawRow > 0)
+    //                        {
+    //                            var rowArray = csvReader.Parser.RawRecord.Split(',');
+    //                            var accountId = rowArray[0].Replace(" ", "");
+    //                            bool isRedeemed;
+    //                            if (rowArray[2].Contains("PAY"))
+    //                            {
+    //                                isRedeemed = true;
+    //                            }
+    //                            else
+    //                            {
+    //                                isRedeemed = false; 
+    //                            }
+    //                            var groundRentProcessorDataService = groundRentProcessorDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+    //                            await groundRentProcessorDataService.CreateOrUpdateSDATRedeemedFile(new AddressModel()
+    //                                {
+    //                                    AccountId = accountId,
+    //                                    IsRedeemed = isRedeemed
+    //                                });
+    //                        }
+    //                        else
+    //                        {
+    //                            continue;
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        var tableDirectory = new DirectoryInfo(Directory.GetCurrentDirectory() + @"\wwwroot\data\zipData\tables\");
+    //        tableDirectory.Delete(true);
+    //    }
+    //}
+    private async void ProcessBaltimoreCity()
+    {
+        foreach (var file in files)
+        {
+            using (var streamReader = new StreamReader(file.UploadPath))
+            {
+                using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
+                {
+                    csvReader.Read();
+
+                    while (csvReader.Read())
+                    {
+                        using (var uow = dataContext.CreateUnitOfWork())
+                        {
+                            var landUseCode = csvReader.Parser.RawRecord.Substring(428, 1);
+                            var yearBuiltString = csvReader.Parser.RawRecord.Substring(1577, 4);
+                            var yearBuilt = int.TryParse(yearBuiltString, out int yearBuiltInt);
+
+                            if (yearBuiltInt >= 2015 &&
+                                (landUseCode == "E" || landUseCode == "R"))
+                            {
+                                var accountId = csvReader.Parser.RawRecord.Substring(2, 16).Replace(" ", "");
+                                var ward = csvReader.Parser.RawRecord.Substring(2, 2).Replace(" ", "");
+                                var section = csvReader.Parser.RawRecord.Substring(390, 2).Replace(" ", "");
+                                var block = csvReader.Parser.RawRecord.Substring(392, 5).Replace(" ", "");
+                                var lot = csvReader.Parser.RawRecord.Substring(398, 4).Replace(" ", "");
+
+                                //var groundRentProcessorDataService = groundRentProcessorDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                                //await groundRentProcessorDataService.CreateOrUpdateSpecPrintFile(
+                                //new AddressModel()
+                                //    {
+                                //        AccountId = accountId,
+                                //        Ward = ward,
+                                //        Section = section,
+                                //        Block = block,
+                                //        Lot = lot,
+                                //        LandUseCode = landUseCode,
+                                //        YearBuilt = yearBuiltInt
+                                //    });
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            File.Delete(file.UploadPath);
+            Console.WriteLine("Processing complete.");
+        }
+    }
+    private async void ProcessMontgomeryCounty()
+    {
+        foreach (var file in files)
+        {
+            using (var streamReader = new StreamReader(file.UploadPath))
+            {
+                using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
+                {
+                    csvReader.Read();
+
+                    while (csvReader.Read())
+                    {
+                        using (var uow = dataContext.CreateUnitOfWork())
+                        {
+                            var rowArray = csvReader.Parser.RawRecord.Split(',');
+                            var landUseCode = rowArray[2];
+
+                            if (landUseCode == "E" || landUseCode == "R")
+                            {
+                                var accountNumber = rowArray[0];
+                                var ward = rowArray[1];
+                                var yearBuiltString = rowArray[3];
+                                var yearBuilt = int.TryParse(yearBuiltString, out int yearBuiltInt);
+                                var accountId = "16" + ward + accountNumber;
+
+                                var montgomeryCountyDataService = montgomeryCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                                await montgomeryCountyDataService.CreateOrUpdateFile(
+                                new AddressModel()
+                                    {
+                                        AccountId = accountId,
+                                        AccountNumber = accountNumber,
+                                        Ward = ward,
+                                        LandUseCode = landUseCode,
+                                        YearBuilt = yearBuiltInt
+                                    });
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            File.Delete(file.UploadPath);
+            Console.WriteLine("Processing complete.");
+        }
+    }
+    private async void ProcessCecilCounty()
+    {
+        foreach (var file in files)
+        {
+            using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
+            {
+                var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
+                using (var uow = dataContext.CreateUnitOfWork())
+                {
+                    foreach(var dto in addressDto)
+                    {
+                        var addressModel = mapper.Map<AddressModel>(dto);
+                        var cecilCountyDataService = cecilCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                        await cecilCountyDataService.CreateOrUpdateFile(addressModel);
+                        count++;
+                    }
+                }
+            }
+            File.Delete(file.UploadPath);
+            Console.WriteLine($"Processing complete. Count: {count}.");
+        }
+    }
+}

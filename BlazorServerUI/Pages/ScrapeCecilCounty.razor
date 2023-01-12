@@ -1,0 +1,49 @@
+﻿@page "/scrapeCecilCounty"
+@using DataLibrary.Models
+@using DataLibrary.Services.SDATScrapers
+@using OpenQA.Selenium;
+@using OpenQA.Selenium.Firefox;
+@inject CecilCountyScraper cecilCountyScraper
+
+<div class="row mb-3 mt-3">
+    <div class="container">
+        <div>
+            <EditForm Model="@AmountToScrape">
+                <label>Amount</label>
+                <InputNumber TValue="int" @bind-Value="@AmountToScrape" DisplayName="Amount">@AmountToScrape</InputNumber>
+            </EditForm>
+            <button class="btn btn-primary" type="submit" @onclick="() => Scrape(AmountToScrape)">Scrape</button>
+            <button class="btn btn-danger" type="submit" @onclick="() => Stop()">Stop</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    WebDriverModel CecilCountyWebDriverModel;
+    private WebDriver CecilCountyDriver { get; set; }
+    private IWebElement CecilCountyInput { get; set; }
+    private readonly string FirefoxDriverPath = @"..\wwwroot\geckodriver.exe";
+    private int AmountToScrape { get; set; }
+
+    private void Scrape(int amountToScrape)
+    {
+        amountToScrape = AmountToScrape;
+        FirefoxProfile firefoxProfile = new(@"..\wwwroot");
+        FirefoxOptions firefoxOptions = new()
+            {
+                Profile = firefoxProfile,
+            };
+        firefoxOptions.AddArguments("--headless");
+        CecilCountyDriver = new FirefoxDriver(FirefoxDriverPath, firefoxOptions, TimeSpan.FromSeconds(30));
+        CecilCountyWebDriverModel = new()
+            {
+                Driver = CecilCountyDriver,
+                Input = CecilCountyInput
+            };
+        cecilCountyScraper.AllocateWebDrivers(CecilCountyWebDriverModel, AmountToScrape);
+    }
+    private void Stop()
+    {
+        cecilCountyScraper.StopScraper();
+    }
+}
