@@ -1,9 +1,13 @@
 ﻿@page "/scrapeMontgomeryCounty"
 @using DataLibrary.Models
 @using DataLibrary.Services.SDATScrapers
-@using OpenQA.Selenium;
+@using DotNet.Testcontainers.Builders;
+@using DotNet.Testcontainers.Containers;
 @using OpenQA.Selenium.Firefox;
-@inject MontgomeryCountyScraper montgomeryCountyScraper
+@using OpenQA.Selenium.Remote;
+@using OpenQA.Selenium.Support.UI;
+@using OpenQA.Selenium;
+@inject MontgomeryCountyScraper MontgomeryCountyScraper
 
 <div class="row mb-3 mt-3">
     <div class="container">
@@ -19,31 +23,80 @@
 </div>
 
 @code {
-    WebDriverModel MontgomeryCountyWebDriverModel;
-    private WebDriver MontgomeryCountyDriver { get; set; }
-    private IWebElement MontgomeryCountyInput { get; set; }
-    private readonly string FirefoxDriverPath = @"..\wwwroot\geckodriver.exe";
+    RemoteWebDriver RemoteWebDriver;
+    WebDriverWait WebDriverWait;
+    private List<AddressModel> AddressModel = new();
     private int AmountToScrape { get; set; }
 
-    private void Scrape(int amountToScrape)
+    protected override async Task OnInitializedAsync()
     {
-        amountToScrape = AmountToScrape;
-        FirefoxProfile firefoxProfile = new(@"C:\WebDrivers\FirefoxProfile-DetaultUser");
-        FirefoxOptions firefoxOptions = new()
-            {
-                Profile = firefoxProfile,
-            };
+        await SpinUp();
+    }
+
+    private async Task SpinUp()
+    {
+        var gridNetwork = new TestcontainersNetworkBuilder()
+            .WithName("seleniumgridnetwork")
+            .Build();
+
+        var seleniumHubTestContainer = new TestcontainersBuilder<TestcontainersContainer>()
+            .WithImage("selenium/node-firefox:4.7.1-20221208")
+            .WithName("selenium-hub")
+            .WithPortBinding(4442, 4442)
+            .WithPortBinding(4443, 4443)
+            .WithPortBinding(4444, 4444)
+            .WithNetwork(gridNetwork)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4444))
+            .Build();
+
+        var firefoxEnvironment = new Dictionary<string, string>()
+        {
+            { "SE_EVENT_BUS_HOST", "selenium-hub" },
+            { "SE_EVENT_BUS_PUBLISH_PORT", "4442" },
+            { "SE_EVENT_BUS_SUBSCRIBE_PORT", "4443" }
+        };
+
+        var firefoxTestContainerBuilder = new TestcontainersBuilder<TestcontainersContainer>()
+            .WithImage("selenium/node-firefox:4.7.1-20221208")
+            .WithEnvironment(firefoxEnvironment)
+            .WithNetwork(gridNetwork)
+            .Build();
+
+        var firefoxVideoEnvironment = new Dictionary<string, string>()
+        {
+            { "DISPLAY_CONTAINER_NAME", "firefox" },
+            { "FILE_NAME", "firefox.mp4" }
+        };
+
+        var firefoxVideoTestContainer = new TestcontainersBuilder<TestcontainersContainer>()
+            .WithImage("selenium/video:ffmpeg-4.3.1-20220726")
+            .WithNetwork(gridNetwork)
+            .WithEnvironment(firefoxVideoEnvironment)
+            .Build();
+
+        await gridNetwork.CreateAsync();
+        await seleniumHubTestContainer.StartAsync();
+        await firefoxTestContainerBuilder.StartAsync();
+        await firefoxVideoTestContainer.StartAsync();
+
+        var firefoxOptions = new FirefoxOptions();
         firefoxOptions.AddArguments("--headless");
-        MontgomeryCountyDriver = new FirefoxDriver(FirefoxDriverPath, firefoxOptions, TimeSpan.FromSeconds(30));
-        MontgomeryCountyWebDriverModel = new()
-            {
-                Driver = MontgomeryCountyDriver,
-                Input = MontgomeryCountyInput
-            };
-        montgomeryCountyScraper.AllocateWebDrivers(MontgomeryCountyWebDriverModel, AmountToScrape);
+        RemoteWebDriver = new RemoteWebDriver(new Uri("http://localhost:4444/"), firefoxOptions);
+
+        WebDriverWait = new(RemoteWebDriver, TimeSpan.FromSeconds(10));
+        WebDriverWait.IgnoreExceptionTypes(
+            typeof(NoSuchElementException),
+            typeof(StaleElementReferenceException),
+            typeof(ElementNotSelectableException),
+            typeof(ElementNotVisibleException));
+    }
+
+    private async Task Scrape(int amountToScrape)
+    {
+        await MontgomeryCountyScraper.Scrape(RemoteWebDriver, WebDriverWait, AddressModel, AmountToScrape);
     }
     private void Stop()
     {
-        montgomeryCountyScraper.StopScraper();
+        RemoteWebDriver.Quit();
     }
 }

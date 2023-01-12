@@ -5,7 +5,7 @@
       "commandVersion": "1.0",
       "composeLaunchAction": "LaunchBrowser",
       "composeLaunchServiceName": "blazorserverui",
-      "composeLaunchUrl": "https://localhost:{ServicePort}",
+      "composeLaunchUrl": "https://localhost:4444",
       "serviceActions": {
         "blazorserverui": "StartDebugging",
         "db": "StartWithoutDebugging"

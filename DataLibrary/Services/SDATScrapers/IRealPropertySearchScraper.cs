@@ -1,9 +1,14 @@
 ﻿using DataLibrary.Models;
+using OpenQA.Selenium.Remote;
+using OpenQA.Selenium.Support.UI;
 
 namespace DataLibrary.Services.SDATScrapers;
 
 public interface IRealPropertySearchScraper
 {
-    void AllocateWebDrivers(WebDriverModel webDriverModel, int amountToScrape);
-    Task Scrape();
+    Task Scrape(
+        RemoteWebDriver RemoteWebDriver, 
+        WebDriverWait WebDriverWait, 
+        List<AddressModel> AddressModel, 
+        int AmountToScrape);
 }
