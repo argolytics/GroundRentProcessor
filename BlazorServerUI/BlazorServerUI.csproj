@@ -10,6 +10,7 @@
 	
 	<ItemGroup>
 	  <Content Remove="Pages\Extract.razor" />
+	  <Content Remove="Pages\ScrapeMontgomeryCounty.razor" />
 	</ItemGroup>
 	
 	<ItemGroup>

@@ -43,7 +43,8 @@ public class BaltimoreCountySqlDataService : IGroundRentProcessorDataService
             var parms = new
             {
                 addressModel.AccountId,
-                addressModel.IsGroundRent
+                addressModel.IsGroundRent,
+                addressModel.PdfDownloaded
             };
             await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCounty_CreateOrUpdateSDATScraper", parms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
@@ -61,6 +62,12 @@ public class BaltimoreCountySqlDataService : IGroundRentProcessorDataService
             new { Amount = amount },
             commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction)).ToList();
     }
+    public async Task<List<AddressModel>> ReadTopAmountWhereIsGroundRentTrue(int amount)
+    {
+        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBaltimoreCounty_ReadTopAmountWhereIsGroundRentTrue",
+            new { Amount = amount },
+            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction)).ToList();
+    }
     public async Task<bool> Delete(string accountId)
     {
         try
@@ -74,10 +81,5 @@ public class BaltimoreCountySqlDataService : IGroundRentProcessorDataService
             Console.WriteLine(ex.Message);
             return false;
         }
-    }
-
-    public Task<List<AddressModel>> ReadTopAmountWhereIsGroundRentTrue(int amount)
-    {
-        throw new NotImplementedException();
     }
 }

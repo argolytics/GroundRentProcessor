@@ -4,5 +4,5 @@ AS
 begin
 	select top (@Amount) [AccountId], [AccountNumber], [Ward]
 	
-	FROM dbo.[MontgomeryCounty] where [IsGroundRent] = 1;
+	FROM dbo.[MontgomeryCounty] where [IsGroundRent] = 1 and [PdfDownloaded] is null;
 End

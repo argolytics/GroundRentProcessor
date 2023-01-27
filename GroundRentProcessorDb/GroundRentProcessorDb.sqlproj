@@ -149,6 +149,8 @@
     <Build Include="dbo\Stored Procedures\spMontgomeryCounty_CreateOrUpdateSDATScraper.sql" />
     <Build Include="dbo\Stored Procedures\spMontgomeryCounty_Delete.sql" />
     <Build Include="dbo\Stored Procedures\spMontgomeryCounty_ReadTopAmountWhereIsGroundRentNull.sql" />
+    <Build Include="dbo\Stored Procedures\spBaltimoreCounty_ReadTopAmountWhereIsGroundRentTrue.sql" />
+    <Build Include="dbo\Stored Procedures\spBaltimoreCity_ReadTopAmountWhereIsGroundRentTrue.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GroundRentProcessorDb.publish.xml" />

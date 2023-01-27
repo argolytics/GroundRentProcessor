@@ -11,219 +11,240 @@ namespace DataLibrary.Services.SDATScrapers;
 public class BaltimoreCityScraper : IRealPropertySearchScraper
 {
     private readonly IDataContext _dataContext;
-    private readonly IGroundRentProcessorDataServiceFactory _groundRentDataServiceFactory;
-    private WebDriver FirefoxDriver { get; set; } = null;
-    private IWebElement FirefoxInput { get; set; }
-    private string FirefoxDriverPath { get; set; } = @"C:\WebDrivers\geckodriver.exe";
+    private readonly BaltimoreCityDataServiceFactory _baltimoreCityDataServiceFactory;
+    private IWebElement Input { get; set; }
+    private List<AddressModel> AddressList = new();
     private string BaseUrl { get; set; } = "https://sdat.dat.maryland.gov/RealProperty/Pages/default.aspx";
+    private bool? dbTransactionResult = null;
+    private bool? pdfDownloaded = null;
+    private int currentCount;
+    private int totalCount;
+    private decimal percentComplete;
+    private int exceptionCount = 0;
 
     public BaltimoreCityScraper(
         IDataContext dataContext,
-        IGroundRentProcessorDataServiceFactory groundRentDataServiceFactory)
+        BaltimoreCityDataServiceFactory baltimoreCityDataServiceFactory)
     {
         _dataContext = dataContext;
-        _groundRentDataServiceFactory = groundRentDataServiceFactory;
-
-        // For Amanda's laptop
-        //FirefoxProfile firefoxProfile = new(@"C:\Users\Jason Argo\AppData\Local\Mozilla\Firefox\Profiles\4x0ows5f.default-release-1670017618762");
-        //FirefoxOptions firefoxOptions = new();
-        //firefoxOptions.Profile = firefoxProfile;
-        //firefoxOptions.AddArguments("--headless");
-        //firefoxOptions.AddArguments("--binary C:\\Program Files\\Mozilla Firefox\\firefox.exe");
-        //FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, firefoxOptions, TimeSpan.FromSeconds(30));
-
-        FirefoxProfile firefoxProfile = new(@"C:\WebDrivers\FirefoxProfile-DetaultUser");
-        FirefoxOptions firefoxOptions = new();
-        firefoxOptions.Profile = firefoxProfile;
-        firefoxOptions.AddArguments("--headless");
-        FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, firefoxOptions, TimeSpan.FromSeconds(30));
+        _baltimoreCityDataServiceFactory = baltimoreCityDataServiceFactory;
     }
-    public void AllocateWebDrivers(
-        List<AddressModel> firefoxAddressList, int amountToScrape)
+    public async Task Scrape(
+        FirefoxDriver firefoxDriver,
+        WebDriverWait webDriverWait,
+        int amountToScrape)
     {
-        WebDriverModel firefoxDriverModel = new WebDriverModel
+        using (var uow = _dataContext.CreateUnitOfWork())
         {
-            Driver = FirefoxDriver,
-            Input = FirefoxInput,
-            AddressList = firefoxAddressList
-        };
-
-        List<Task> tasks = new();
-        tasks.Add(Task.Run(() => Scrape(firefoxDriverModel)));
-        Task.WaitAll(tasks.ToArray());
-
-    }
-    public async Task Scrape(WebDriverModel webDriverModel)
-    {
-        int currentCount;
-        var totalCount = webDriverModel.AddressList.Count;
-        bool result;
-        bool checkingIfAddressExists = true;
-
-        WebDriverWait webDriverWait = new(webDriverModel.Driver, TimeSpan.FromSeconds(10));
-        webDriverWait.IgnoreExceptionTypes(
-            typeof(NoSuchElementException),
-            typeof(StaleElementReferenceException),
-            typeof(ElementNotSelectableException),
-            typeof(ElementNotVisibleException));
+            var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+            //AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentNull(amountToScrape);
+            AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentTrue(amountToScrape);
+        }
+        currentCount = 0;
+        totalCount = AddressList.Count;
 
         try
         {
-            Console.WriteLine($"{webDriverModel.Driver} begin...");
-            foreach (var address in webDriverModel.AddressList)
+            var iterList = AddressList.ToList();
+            foreach (var address in iterList)
             {
-                var section = address.Section.Replace(" ", "");
-                var block = address.Block.Replace(" ", "");
-                var lot = address.Lot.Replace(" ", "");
-
-                currentCount = webDriverModel.AddressList.IndexOf(address) + 1;
                 // Selecting "BALTIMORE CITY"
-                webDriverModel.Driver.Navigate().GoToUrl(BaseUrl);
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlCounty > option:nth-child(4)")));
-                webDriverModel.Input.Click();
+                firefoxDriver.Navigate().GoToUrl(BaseUrl);
+                Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlCounty > option:nth-child(4)")));
+                Input.Click();
 
                 // Selecting "PROPERTY ACCOUNT IDENTIFIER"
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlSearchType > option:nth-child(3)")));
-                webDriverModel.Input.Click();
+                Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlSearchType > option:nth-child(3)")));
+                Input.Click();
 
                 // Click Continue button
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StartNavigationTemplateContainerID_btnContinue")));
-                webDriverModel.Input.Click();
+                Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StartNavigationTemplateContainerID_btnContinue")));
+                Input.Click();
 
-                // ChromeInput Ward
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtWard")));
-                webDriverModel.Input.Clear();
-                webDriverModel.Input.SendKeys(address.Ward);
+                // Input Ward
+                Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtWard")));
+                Input.Clear();
+                Input.SendKeys(address.Ward);
 
-                // ChromeInput Section
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtSection")));
-                webDriverModel.Input.Clear();
-                webDriverModel.Input.SendKeys(section);
+                // Input Section
+                Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtSection")));
+                Input.Clear();
+                Input.SendKeys(address.Section);
 
-                // ChromeInput Block
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtBlock")));
-                webDriverModel.Input.Clear();
-                webDriverModel.Input.SendKeys(block);
+                // Input Block
+                Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtBlock")));
+                Input.Clear();
+                Input.SendKeys(address.Block);
 
-                // ChromeInput Lot
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtLot")));
-                webDriverModel.Input.Clear();
-                webDriverModel.Input.SendKeys(lot);
+                // Input Lot
+                Input = webDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtLot")));
+                Input.Clear();
+                Input.SendKeys(address.Lot);
 
                 // Click Next button
-                webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StepNavigationTemplateContainerID_btnStepNextButton")));
-                webDriverModel.Input.Click();
-                if (string.IsNullOrEmpty(section)
-                    || string.IsNullOrEmpty(block)
-                    || string.IsNullOrEmpty(lot))
+                Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StepNavigationTemplateContainerID_btnStepNextButton")));
+                Input.Click();
+                if (firefoxDriver.FindElements(By.CssSelector("#cphMainContentArea_ucSearchType_lblErr")).Count != 0)
                 {
-                    // Address does not have section, block, and lot
-                    using (var uow = _dataContext.CreateUnitOfWork())
-                    {
-                        var groundRentDataService = _groundRentDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                        result = await groundRentDataService.Delete(address.AccountId);
-                        Console.WriteLine($"{address.AccountId.Trim()} does not have a section, block, and lot so it was deleted.");
-                    }
-                }
-                else if (webDriverModel.Driver.FindElements(By.CssSelector("#cphMainContentArea_ucSearchType_lblErr")).Count != 0)
-                {
-                    if (webDriverModel.Driver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_lblErr"))
+                    if (firefoxDriver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_lblErr"))
                         .Text.Contains("There are no records that match your criteria"))
                     {
                         // Address does not exist in SDAT
                         using (var uow = _dataContext.CreateUnitOfWork())
                         {
-                            var groundRentDataService = _groundRentDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                            result = await groundRentDataService.Delete(address.AccountId);
-                            Console.WriteLine($"{address.AccountId.Trim()} does not exist and was deleted.");
+                            var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                            dbTransactionResult = await baltimoreCityDataService.Delete(address.AccountId);
                         }
+                        if (dbTransactionResult is false)
+                        {
+                            Console.WriteLine($"Could not delete {address.AccountId}. Quitting scrape.");
+                            firefoxDriver.Quit();
+                        }
+                        currentCount++;
+                        Console.WriteLine($"{address.AccountId.Trim()} does not exist and was deleted.");
                     }
                     else
                     {
-                        Console.WriteLine($"{webDriverModel.Driver} found {address.AccountId.Trim()} does not exist and tried to delete, but the error message text is different than usual: {webDriverModel.Driver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Text}. Quitting scrape.");
-                        webDriverModel.Driver.Quit();
+                        Console.WriteLine($"{firefoxDriver} found {address.AccountId.Trim()} does not exist and tried to delete, but the error message text is different than usual: {firefoxDriver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Text}. Quitting scrape.");
+                        firefoxDriver.Quit();
                     }
                 }
                 else
                 {
                     // Click Ground Rent Registration link
-                    webDriverModel.Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucDetailsSearch_dlstDetaisSearch_lnkGroundRentRegistration_0")));
-                    webDriverModel.Input.Click();
-
+                    webDriverWait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector("head > style:nth-child(29)")));
+                    Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucDetailsSearch_dlstDetaisSearch_lnkGroundRentRegistration_0")));
+                    Input.Click();
+                    var firstWindow = firefoxDriver.CurrentWindowHandle;
                     // Condition: check if html has ground rent error tag (meaning property has no ground rent registered)
-
-                    if (webDriverModel.Driver.FindElements(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Count != 0)
+                    if (firefoxDriver.FindElements(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Count != 0)
                     {
-                        if (webDriverModel.Driver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr"))
+                        if (firefoxDriver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr"))
                             .Text.Contains("There is currently no ground rent"))
                         {
                             // Property is not ground rent
                             address.IsGroundRent = false;
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
-                                var groundRentDataService = _groundRentDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                                result = await groundRentDataService.CreateOrUpdateSDATScraper(new AddressModel
+                                var BaltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                                dbTransactionResult = await BaltimoreCityDataService.CreateOrUpdateSDATScraper(new AddressModel
                                 {
                                     AccountId = address.AccountId,
-                                    IsGroundRent = address.IsGroundRent
+                                    IsGroundRent = address.IsGroundRent,
+                                    PdfDownloaded = null
                                 });
-                                Console.WriteLine($"{address.AccountId.Trim()} is fee simple.");
+                                currentCount++;
+                                AddressList.Remove(address);
                             }
-                            if (result is false)
+                            if (dbTransactionResult is false)
                             {
                                 // Something wrong happened and I do not want the application to skip over this address
-                                webDriverModel.Driver.Quit();
-                                Console.WriteLine($"Db could not complete transaction for {address.AccountId.Trim()}. Call Jason.");
+                                Console.WriteLine($"Db could not complete transaction for {address.AccountId.Trim()}. Quitting scrape.");
+                                firefoxDriver.Quit();
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"{webDriverModel.Driver} found {address.AccountId.Trim()} has a different error message than 'There is currently no ground rent' which is: {webDriverModel.Driver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Text}. Quitting scrape.");
-                            webDriverModel.Driver.Quit();
                         }
                     }
                     else
                     {
                         // Property must be ground rent
                         address.IsGroundRent = true;
+                        // Determine child count of pdf list
+                        var pdfTableRowCount = firefoxDriver.FindElements(By.XPath("//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']/tbody/tr")).Count;
+                        // Grab Ground Rent Registration PDF
+                        Input = webDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector($"#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult_lnkMakePDF_{pdfTableRowCount - 3}")));
+                        Input.Click();
+                        foreach (string window in firefoxDriver.WindowHandles)
+                        {
+                            if (firstWindow != window)
+                            {
+                                firefoxDriver.SwitchTo().Window(window);
+                            }
+                        }
+                        var accountId = address.AccountId.Trim();
+                        if (webDriverWait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").Equals("complete")))
+                        {
+                            PrintOptions printOptions = new();
+                            var pdf = firefoxDriver.Print(printOptions);
+                            pdf.SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
+                            pdfDownloaded = true;
+                        }
+                        if (pdfDownloaded is true)
+                        {
+                            address.PdfDownloaded = true;
+                        }
+                        else
+                        {
+                            pdfDownloaded = false;
+                        }
                         using (var uow = _dataContext.CreateUnitOfWork())
                         {
-                            var groundRentDataService = _groundRentDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                            result = await groundRentDataService.CreateOrUpdateSDATScraper(new AddressModel
+                            var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                            dbTransactionResult = await baltimoreCityDataService.CreateOrUpdateSDATScraper(new AddressModel
                             {
                                 AccountId = address.AccountId,
-                                IsGroundRent = address.IsGroundRent
+                                IsGroundRent = address.IsGroundRent,
+                                PdfDownloaded = address.PdfDownloaded
                             });
-                            Console.WriteLine($"{address.AccountId.Trim()} is ground rent.");
                         }
-                        if (result is false)
+                        if (dbTransactionResult is false)
                         {
-                            // Something wrong happened and I do not want the application to skip over this address
-                            webDriverModel.Driver.Quit();
-                            Console.WriteLine($"Db could not complete transaction for {address.AccountId.Trim()}. Call Jason.");
+                            firefoxDriver.Quit();
                         }
+                        currentCount++;
+                        AddressList.Remove(address);
+                        firefoxDriver.Close();
+                        firefoxDriver.SwitchTo().Window(firstWindow);
                     }
-                    decimal percentComplete = decimal.Divide(currentCount, totalCount);
-                    Console.WriteLine($"{webDriverModel.Driver} has processed {percentComplete:P0} of addresses in list.");
                 }
             }
+            ReportTotals(firefoxDriver);
         }
-        catch (NoSuchElementException ex)
+        catch (Exception ex)
         {
-            Console.WriteLine($"{webDriverModel.Driver} ran into the following exception: {ex.Message}");
+            if (exceptionCount > 3)
+            {
+                firefoxDriver.Quit();
+                Console.WriteLine("Scraper quit. Exception count passed safety threshold.");
+            }
+            Console.WriteLine(ex.Message);
+            exceptionCount++;
+            firefoxDriver.Quit();
+            ReportTotals(firefoxDriver);
+            //await RestartScrape(firefoxDriver, webDriverWait, addressList, amountToScrape);
         }
-        catch (StaleElementReferenceException ex)
+        finally
         {
-            Console.WriteLine($"{webDriverModel.Driver} ran into the following exception: {ex.Message}");
+            firefoxDriver.Quit();
+            //await RestartScrape(firefoxDriver, webDriverWait, addressList, amountToScrape);
         }
-        catch (ArgumentNullException ex)
+    }
+
+    private async Task RestartScrape(
+        FirefoxDriver firefoxDriver,
+        WebDriverWait webDriverWait,
+        int amountToScrape)
+    {
+        AddressList.Clear();
+        using (var uow = _dataContext.CreateUnitOfWork())
         {
-            Console.WriteLine($"{webDriverModel.Driver} ran into the following exception: {ex.Message}");
+            var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+            AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentNull(amountToScrape);
         }
-        catch (WebDriverException ex)
+        if (AddressList.Count == 0)
         {
-            Console.WriteLine($"{webDriverModel.Driver} ran into the following exception: {ex.Message}");
+            firefoxDriver.Quit();
+            ReportTotals(firefoxDriver);
         }
-        webDriverModel.Driver.Quit();
+        else
+        {
+            Console.WriteLine("Fresh list read. Restarting scrape.");
+            ReportTotals(firefoxDriver);
+            await Scrape(firefoxDriver, webDriverWait, amountToScrape);
+        }
+    }
+    private void ReportTotals(FirefoxDriver firefoxDriver)
+    {
+        percentComplete = decimal.Divide(currentCount, totalCount);
+        Console.WriteLine($"{firefoxDriver} has processed {percentComplete:P0} of {totalCount} addresses.");
     }
 }

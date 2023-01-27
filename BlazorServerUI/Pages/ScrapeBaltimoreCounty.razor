@@ -1,4 +1,4 @@
-﻿@page "/scrapeCecilCounty"
+﻿@page "/scrapeBaltimoreCounty"
 @using DataLibrary.Models
 @using DataLibrary.Services.SDATScrapers
 @using DotNet.Testcontainers.Builders;
@@ -7,7 +7,7 @@
 @using OpenQA.Selenium.Remote;
 @using OpenQA.Selenium.Support.UI;
 @using OpenQA.Selenium;
-@inject CecilCountyScraper cecilCountyScraper
+@inject BaltimoreCountyScraper baltimoreCountyScraper
 
 <div class="row mb-3 mt-3">
     <div class="container">
@@ -38,9 +38,9 @@
     {
         FirefoxProfile firefoxProfile = new(FirefoxProfile);
         FirefoxOptions firefoxOptions = new()
-            {
-                Profile = firefoxProfile,
-            };
+        {
+            Profile = firefoxProfile,
+        };
         firefoxOptions.AddArguments("--headless");
         FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, firefoxOptions, TimeSpan.FromSeconds(20));
 
@@ -54,7 +54,7 @@
 
     private async Task Scrape(int amountToScrape)
     {
-        await cecilCountyScraper.Scrape(FirefoxDriver, WebDriverWait, AmountToScrape);
+        await baltimoreCountyScraper.Scrape(FirefoxDriver, WebDriverWait, AmountToScrape);
     }
     private void Stop()
     {

@@ -12,8 +12,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorServerUI", "BlazorSer
 		{3F5251B2-83E9-4219-AAB3-383DEE81C7C7} = {3F5251B2-83E9-4219-AAB3-383DEE81C7C7}
 	EndProjectSection
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{7B5B133D-EFB2-4C01-AA56-EF4F49EA8B10}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,10 +32,6 @@ Global
 		{CA294627-CDE1-4333-B6CC-7B4B4C8D8875}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA294627-CDE1-4333-B6CC-7B4B4C8D8875}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA294627-CDE1-4333-B6CC-7B4B4C8D8875}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7B5B133D-EFB2-4C01-AA56-EF4F49EA8B10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7B5B133D-EFB2-4C01-AA56-EF4F49EA8B10}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7B5B133D-EFB2-4C01-AA56-EF4F49EA8B10}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7B5B133D-EFB2-4C01-AA56-EF4F49EA8B10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,8 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Services\SDATScrapers\BaltimoreCityScraper.cs" />
-    <Compile Remove="Services\SDATScrapers\BaltimoreCountyScraper.cs" />
+    <Compile Remove="Services\SDATScrapers\MontgomeryCountyScraper.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +16,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Forms" Version="7.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+    <PackageReference Include="PdfSharp" Version="1.50.5147" />
     <PackageReference Include="Selenium.Support" Version="4.7.0" />
     <PackageReference Include="Selenium.WebDriver" Version="4.7.0" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />

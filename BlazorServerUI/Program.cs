@@ -29,18 +29,24 @@ public class Program
 
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            //builder.Services.AddScoped<IDataContext>(s => new DataContext(configuration.GetConnectionString("Default")));
-            var dockerHost = Environment.GetEnvironmentVariable("DB_HOST");
-            var dockerName = Environment.GetEnvironmentVariable("DB_NAME");
-            var dockerPassword = Environment.GetEnvironmentVariable("DB_SA_PASSWORD");
-            builder.Services.AddScoped<IDataContext>(
-                s => new DataContext(
-                    configuration.GetConnectionString(
-                        $"Data Source={dockerHost};Initial Catalog={dockerName};User ID=SA;Password={dockerPassword}")));
-            builder.Services.AddScoped<MontgomeryCountyDataServiceFactory>();
+            builder.Services.AddScoped<IDataContext>(s => new DataContext(configuration.GetConnectionString("Default")));
+            //var dockerHost = Environment.GetEnvironmentVariable("DB_HOST");
+            //var dockerName = Environment.GetEnvironmentVariable("DB_NAME");
+            //var dockerPassword = Environment.GetEnvironmentVariable("DB_SA_PASSWORD");
+            //builder.Services.AddScoped<IDataContext>(
+            //    s => new DataContext(
+            //        configuration.GetConnectionString(
+            //            $"Data Source={dockerHost};Initial Catalog={dockerName};User ID=SA;Password={dockerPassword}")));
+            builder.Services.AddScoped<BaltimoreCityDataServiceFactory>();
+            builder.Services.AddScoped<BaltimoreCityScraper>();
+            builder.Services.AddScoped<BaltimoreCountyDataServiceFactory>();
+            builder.Services.AddScoped<BaltimoreCountyScraper>();
             builder.Services.AddScoped<CecilCountyDataServiceFactory>();
-            builder.Services.AddScoped<MontgomeryCountyScraper>();
             builder.Services.AddScoped<CecilCountyScraper>();
+            //builder.Services.AddScoped<MontgomeryCountyDataServiceFactory>();
+            //builder.Services.AddScoped<CecilCountyDataServiceFactory>();
+            //builder.Services.AddScoped<MontgomeryCountyScraper>();
+            //builder.Services.AddScoped<CecilCountyScraper>();
             builder.Services.AddAutoMapper(typeof(AutoMapperEntryPoint).Assembly);
             var mapper = new MapperConfiguration(options =>
             {

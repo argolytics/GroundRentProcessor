@@ -1,6 +1,7 @@
 ﻿CREATE PROCEDURE [dbo].[spBaltimoreCity_CreateOrUpdateSDATScraper]
 	@AccountId NCHAR(16),
-    @IsGroundRent BIT
+    @IsGroundRent BIT,
+	@PdfDownloaded BIT
 AS
 SET NOCOUNT ON;
 	
@@ -10,17 +11,20 @@ BEGIN
 BEGIN
 	UPDATE dbo.[BaltimoreCity] SET
 	[AccountId] = @AccountId,
-    [IsGroundRent] = @IsGroundRent
+    [IsGroundRent] = @IsGroundRent,
+	[PdfDownloaded] = @PdfDownloaded
 	WHERE [AccountId] = @AccountId
 END
 ELSE
 BEGIN
 	INSERT INTO dbo.[BaltimoreCity](
 	[AccountId],
-    [IsGroundRent])
+    [IsGroundRent],
+	[PdfDownloaded])
 
 	VALUES(
 	@AccountId,
-    @IsGroundRent)
+    @IsGroundRent,
+	@PdfDownloaded)
 END
 END

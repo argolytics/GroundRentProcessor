@@ -10,7 +10,8 @@
         public string? Lot { get; set; }
         public string? LandUseCode { get; set; }
         public int? YearBuilt { get; set; }
-        public bool? IsRedeemed { get; set; }
         public bool? IsGroundRent { get; set; }
+        public bool? IsRedeemed { get; set; }
+        public bool? PdfDownloaded { get; set; }
     }
 }
