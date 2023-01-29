@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\SDATScrapers\BaltimoreCountyScraper.cs" />
+    <Compile Remove="Services\SDATScrapers\CecilCountyScraper.cs" />
     <Compile Remove="Services\SDATScrapers\MontgomeryCountyScraper.cs" />
   </ItemGroup>
 

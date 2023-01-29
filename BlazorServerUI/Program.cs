@@ -39,14 +39,6 @@ public class Program
             //            $"Data Source={dockerHost};Initial Catalog={dockerName};User ID=SA;Password={dockerPassword}")));
             builder.Services.AddScoped<BaltimoreCityDataServiceFactory>();
             builder.Services.AddScoped<BaltimoreCityScraper>();
-            builder.Services.AddScoped<BaltimoreCountyDataServiceFactory>();
-            builder.Services.AddScoped<BaltimoreCountyScraper>();
-            builder.Services.AddScoped<CecilCountyDataServiceFactory>();
-            builder.Services.AddScoped<CecilCountyScraper>();
-            //builder.Services.AddScoped<MontgomeryCountyDataServiceFactory>();
-            //builder.Services.AddScoped<CecilCountyDataServiceFactory>();
-            //builder.Services.AddScoped<MontgomeryCountyScraper>();
-            //builder.Services.AddScoped<CecilCountyScraper>();
             builder.Services.AddAutoMapper(typeof(AutoMapperEntryPoint).Assembly);
             var mapper = new MapperConfiguration(options =>
             {

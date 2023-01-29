@@ -17,47 +17,15 @@
                 <InputNumber TValue="int" @bind-Value="@AmountToScrape" DisplayName="Amount">@AmountToScrape</InputNumber>
             </EditForm>
             <button class="btn btn-primary" type="submit" @onclick="() => Scrape(AmountToScrape)">Scrape</button>
-            <button class="btn btn-danger" type="submit" @onclick="() => Stop()">Stop</button>
         </div>
     </div>
 </div>
 
 @code {
-    FirefoxDriver FirefoxDriver;
-    private readonly string FirefoxDriverPath = @"C:\WebDrivers\geckodriver.exe";
-    private readonly string FirefoxProfile = @"C:\Users\Jason\AppData\Local\Mozilla\Firefox\Profiles\7mdph1dj.AspxConverter";
-    WebDriverWait WebDriverWait;
+    
     private int AmountToScrape { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await SpinUp();
-    }
-
-    private async Task SpinUp()
-    {
-        FirefoxProfile firefoxProfile = new(FirefoxProfile);
-        FirefoxOptions firefoxOptions = new()
-            {
-                Profile = firefoxProfile,
-            };
-        //firefoxOptions.AddArguments("--headless");
-        FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, firefoxOptions, TimeSpan.FromSeconds(20));
-
-        WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
-        WebDriverWait.IgnoreExceptionTypes(
-            typeof(NoSuchElementException),
-            typeof(StaleElementReferenceException),
-            typeof(ElementNotSelectableException),
-            typeof(ElementNotVisibleException));
-    }
-
     private async Task Scrape(int amountToScrape)
     {
-        await baltimoreCityScraper.Scrape(FirefoxDriver, WebDriverWait, AmountToScrape);
-    }
-    private void Stop()
-    {
-        FirefoxDriver.Quit();
+        await baltimoreCityScraper.Scrape(AmountToScrape);
     }
 }
