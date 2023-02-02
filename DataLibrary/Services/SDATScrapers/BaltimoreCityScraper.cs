@@ -165,6 +165,7 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         address.IsGroundRent = true;
                         // Determine child count of pdf list
                         const string tableXPath = @"//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']";
+                        // adding the below seems to ensure that the table fully loads - I am not seeing OutOfRangeExceptions thrown by line 174 anymore.
                         WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(tableXPath)));
                         //TBD: should we add a proper wait/until here to wait until the table is fully loaded? maybe that is why sometimes I see zero elements being returned.
                         var pdfLinkArray = FirefoxDriver.FindElements(By.XPath($"{tableXPath}/tbody/tr"));
