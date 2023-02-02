@@ -13,8 +13,8 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
     private readonly IDataContext _dataContext;
     private readonly BaltimoreCityDataServiceFactory _baltimoreCityDataServiceFactory;
     FirefoxDriver FirefoxDriver;
-    private readonly string FirefoxDriverPath = @"C:\WebDrivers\geckodriver.exe";
-    private readonly string FirefoxProfile = @"C:\Users\Jason\AppData\Local\Mozilla\Firefox\Profiles\7mdph1dj.AspxConverter";
+    private readonly string FirefoxDriverPath = @"d:\pcifr\t\GeckoDriver\geckodriver.exe";
+    private readonly string FirefoxProfile = @"d:\pcifr\t\GeckoDriver";
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
     private List<AddressModel> AddressList = new();
@@ -60,8 +60,7 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
 
         try
         {
-            var iterList = AddressList.ToList();
-            foreach (var address in iterList)
+            foreach (var address in AddressList)
             {
                 // Selecting "BALTIMORE CITY"
                 FirefoxDriver.Navigate().GoToUrl(BaseUrl);
@@ -79,22 +78,22 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                 // Input Ward
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtWard")));
                 Input.Clear();
-                Input.SendKeys(address.Ward);
+                Input.SendKeys(address.Ward?.Trim());
 
                 // Input Section
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtSection")));
                 Input.Clear();
-                Input.SendKeys(address.Section);
+                Input.SendKeys(address.Section?.Trim()); //<- I noticed some of these values coming in have trailing spaces. not sure if that matters, but it may be good to remove them before filling the form.
 
                 // Input Block
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtBlock")));
                 Input.Clear();
-                Input.SendKeys(address.Block);
+                Input.SendKeys(address.Block?.Trim());
 
                 // Input Lot
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtLot")));
                 Input.Clear();
-                Input.SendKeys(address.Lot);
+                Input.SendKeys(address.Lot?.Trim());
 
                 // Click Next button
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StepNavigationTemplateContainerID_btnStepNextButton")));
@@ -164,11 +163,20 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         // Property must be ground rent
                         address.IsGroundRent = true;
                         // Determine child count of pdf list
+
+                        //TBD: should we add a proper wait/until here to wait until the table is fully loaded? maybe that is why sometimes I see zero elements being returned.
                         var pdfLinkArray = FirefoxDriver.FindElements(By.XPath("//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']/tbody/tr"));
+
+                        // this throws Argument out of range exception when .Count is zero. TBD: add special handling for the case when there are no items returned, e.g. no links on the page?
                         var registrationPdfElementId = pdfLinkArray[pdfLinkArray.Count - 2].FindElement(By.TagName("a")).GetAttribute("id");
                         // Grab Ground Rent Registration PDF
                         Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(registrationPdfElementId)));
                         Input.Click();
+
+                        // in my testing I have noticed the following potential problem: if I abort a debug run, FireFox windows from that run remain open.
+                        // when I start another run, a new window is opened and it is being used until here. However, once we enter the below loop, we will be iterating over all "garbage" windows
+                        // from the previous run(s) as well. perhaps it is when we pick up one of those windows, which can be in any random state, that we run into trouble trying to "print" from that window?
+                        // we should add code that makes sure there are zero open browser windows prior to each scrape run. otherwise things may easily get out of control.
                         foreach (string window in FirefoxDriver.WindowHandles)
                         {
                             if (firstWindow != window)
@@ -181,7 +189,7 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         {
                             PrintOptions printOptions = new();
                             var pdf = FirefoxDriver.Print(printOptions);
-                            pdf.SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
+                            pdf.SaveAsFile($@"d:\pcifr\t\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
                             pdfDownloaded = true;
                         }
                         if (pdfDownloaded is true)
@@ -216,6 +224,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
             ReportTotals(FirefoxDriver);
             await RestartScrape(amountToScrape);
         }
+        // this exception is being hit every single time during my runs.
+        // i) it's probably because the array we are loading from the html table is empty because the table is not fully loaded yet - this should be resolved
+        // ii) all of the below "catches" should be move to the location where we excpet the given exception to be thrown. e.g. this outOfRange should be in a try/catch block around the specific 
+        // method call that may throw this; preferably we will remove the root cause, but if we can't, let's wrap that specific method call. otherwise we don't know what could be throwing this exception
         catch(ArgumentOutOfRangeException argumentOutOfRangeException)
         {
             exceptionCount++;

@@ -16,7 +16,7 @@
                 <label>Amount</label>
                 <InputNumber TValue="int" @bind-Value="@AmountToScrape" DisplayName="Amount">@AmountToScrape</InputNumber>
             </EditForm>
-            <button class="btn btn-primary" type="submit" @onclick="() => Scrape(AmountToScrape)">Scrape</button>
+            <button class="btn btn-primary" type="submit" @onclick="async () => await Scrape(AmountToScrape)">Scrape</button>
         </div>
     </div>
 </div>
