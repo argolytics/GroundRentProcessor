@@ -171,7 +171,9 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         //TBD: should we add a proper wait/until here to wait until the table is fully loaded? maybe that is why sometimes I see zero elements being returned.
                         var pdfLinkArray = FirefoxDriver.FindElements(By.XPath($"{tableXPath}/tbody/tr"));
 
-                        // this throws Argument out of range exception when .Count is zero. TBD: add special handling for the case when there are no items returned, e.g. no links on the page?
+                        // i) this throws Argument out of range exception when .Count is zero. TBD: add special handling for the case when there are no items returned, e.g. no links on the page?
+                        // ii) why are we grabbing only one element here? should we not add a foreach loop here on all elements, skipping the "header" elements? also, the index value seems strange:
+                        // we are starting from the second last item, shouldn't we start from the 3rd item instead? Consider changing it to pdfLinArray[2, ..] to grab all items from 3rd to last, and do a foreach on those.
                         var registrationPdfElementId = pdfLinkArray[pdfLinkArray.Count - 2].FindElement(By.TagName("a")).GetAttribute("id");
                         // Grab Ground Rent Registration PDF
                         Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(registrationPdfElementId)));
