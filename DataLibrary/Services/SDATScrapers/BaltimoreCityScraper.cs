@@ -266,6 +266,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
             Console.WriteLine($"Error Message: {webDriverTimeoutException.Message}");
             await RestartScrape(amountToScrape);
         }
+        // we should not have such large scoped catches. this catch will handle any Null exception anywhere in a huge code block, which we don't want.
+        // anytime we make a mistake with a piece of code where there is an unexpected null - and I do see some potential places like that where VS is warning me about nullable values,
+        // we will swallow that exception, and try scraping again. this will make bugs, such as incorrect inputs, very hard to track down. Instead we should let the null exception break us, so we fix it
+        // for places where we see intermittent exceptions, add a try/catch around those places only, to scope them down.
         catch (NullReferenceException nullReferenceException)
         {
             exceptionCount++;
