@@ -5,6 +5,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
+using System.Diagnostics;
 
 namespace DataLibrary.Services.SDATScrapers;
 
@@ -13,8 +14,8 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
     private readonly IDataContext _dataContext;
     private readonly BaltimoreCityDataServiceFactory _baltimoreCityDataServiceFactory;
     FirefoxDriver FirefoxDriver;
-    private readonly string FirefoxDriverPath = @"C:\WebDrivers\geckodriver.exe";
-    private readonly string FirefoxProfile = @"C:\Users\Jason\AppData\Local\Mozilla\Firefox\Profiles\7mdph1dj.AspxConverter";
+    private readonly string FirefoxDriverPath = @"d:\pcifr\t\GeckoDriver\geckodriver.exe";
+    private readonly string FirefoxProfile = @"d:\pcifr\t\GeckoDriver";
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
     private List<AddressModel> AddressList = new();
@@ -79,22 +80,22 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                 // Input Ward
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtWard")));
                 Input.Clear();
-                Input.SendKeys(address.Ward);
+                Input.SendKeys(address.Ward?.Trim());
 
                 // Input Section
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtSection")));
                 Input.Clear();
-                Input.SendKeys(address.Section);
+                Input.SendKeys(address.Section?.Trim()); //<- I noticed some of these values coming in have trailing spaces. not sure if that matters, but it may be good to remove them before filling the form.
 
                 // Input Block
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtBlock")));
                 Input.Clear();
-                Input.SendKeys(address.Block);
+                Input.SendKeys(address.Block?.Trim());
 
                 // Input Lot
                 Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtLot")));
                 Input.Clear();
-                Input.SendKeys(address.Lot);
+                Input.SendKeys(address.Lot?.Trim());
 
                 // Click Next button
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StepNavigationTemplateContainerID_btnStepNextButton")));
@@ -164,11 +165,29 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         // Property must be ground rent
                         address.IsGroundRent = true;
                         // Determine child count of pdf list
-                        var pdfLinkArray = FirefoxDriver.FindElements(By.XPath("//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']/tbody/tr"));
+                        const string tableXPath = @"//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']";
+                        // adding the below seems to ensure that the table fully loads - I am not seeing OutOfRangeExceptions thrown by line 174 anymore.
+                        WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(tableXPath)));
+                        //TBD: should we add a proper wait/until here to wait until the table is fully loaded? maybe that is why sometimes I see zero elements being returned.
+                        var pdfLinkArray = FirefoxDriver.FindElements(By.XPath($"{tableXPath}/tbody/tr"));
+
+                        // i) this throws Argument out of range exception when .Count is zero. TBD: add special handling for the case when there are no items returned, e.g. no links on the page?
+                        // ii) why are we grabbing only one element here? should we not add a foreach loop here on all elements, skipping the "header" elements? also, the index value seems strange:
+                        // we are starting from the second last item, shouldn't we start from the 3rd item instead? Consider changing it to pdfLinArray[2..] to grab all items from 3rd to last, and do a foreach on those.
                         var registrationPdfElementId = pdfLinkArray[pdfLinkArray.Count - 2].FindElement(By.TagName("a")).GetAttribute("id");
                         // Grab Ground Rent Registration PDF
                         Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(registrationPdfElementId)));
                         Input.Click();
+
+                        // in my testing I have noticed the following potential problem: if I abort a debug run, FireFox windows from that run remain open.
+                        // when I start another run, a new window is opened and it is being used until here. However, once we enter the below loop, we will be iterating over all "garbage" windows
+                        // from the previous run(s) as well. perhaps it is when we pick up one of those windows, which can be in any random state, that we run into trouble trying to "print" from that window?
+                        // we should add code that makes sure there are zero open browser windows prior to each scrape run. otherwise things may easily get out of control.
+
+                        // adding an assertion that there are only two windows open - if there are more or less than 2 than something is majorly wrong, and results will be unexpected
+                        if (FirefoxDriver.WindowHandles.Count != 2) {
+                            throw new InvalidOperationException($"We expect only 2 windows to be open for the driver. If there are more, or fewer, than results will be unexpected. Found this many windows: {FirefoxDriver.WindowHandles.Count}"); 
+                        }
                         foreach (string window in FirefoxDriver.WindowHandles)
                         {
                             if (firstWindow != window)
@@ -177,12 +196,17 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                             }
                         }
                         var accountId = address.AccountId.Trim();
-                        if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
-                        {
-                            PrintOptions printOptions = new();
-                            var pdf = FirefoxDriver.Print(printOptions);
-                            pdf.SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
-                            pdfDownloaded = true;
+                        try {
+                            if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete"))) {
+                                PrintOptions printOptions = new();
+                                var pdf = FirefoxDriver.Print(printOptions);
+                                pdf.SaveAsFile($@"d:\pcifr\t\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
+                                pdfDownloaded = true;
+                            }
+                        }
+                        catch (Exception) {
+                            Debugger.Break();
+                            throw;
                         }
                         if (pdfDownloaded is true)
                         {
@@ -214,8 +238,13 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                 }
             }
             ReportTotals(FirefoxDriver);
+            // the below causes us to restart even on success - is that intentional?
             await RestartScrape(amountToScrape);
         }
+        // this exception is being hit every single time during my runs.
+        // i) it's probably because the array we are loading from the html table is empty because the table is not fully loaded yet - this should be resolved
+        // ii) all of the below "catches" should be move to the location where we excpet the given exception to be thrown. e.g. this outOfRange should be in a try/catch block around the specific 
+        // method call that may throw this; preferably we will remove the root cause, but if we can't, let's wrap that specific method call. otherwise we don't know what could be throwing this exception
         catch(ArgumentOutOfRangeException argumentOutOfRangeException)
         {
             exceptionCount++;
@@ -237,6 +266,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
             Console.WriteLine($"Error Message: {webDriverTimeoutException.Message}");
             await RestartScrape(amountToScrape);
         }
+        // we should not have such large scoped catches. this catch will handle any Null exception anywhere in a huge code block, which we don't want.
+        // anytime we make a mistake with a piece of code where there is an unexpected null - and I do see some potential places like that where VS is warning me about nullable values,
+        // we will swallow that exception, and try scraping again. this will make bugs, such as incorrect inputs, very hard to track down. Instead we should let the null exception break us, so we fix it
+        // for places where we see intermittent exceptions, add a try/catch around those places only, to scope them down.
         catch (NullReferenceException nullReferenceException)
         {
             exceptionCount++;
