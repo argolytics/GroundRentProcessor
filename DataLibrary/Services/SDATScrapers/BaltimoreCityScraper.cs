@@ -60,7 +60,8 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
 
         try
         {
-            foreach (var address in AddressList)
+            var iterList = AddressList.ToList();
+            foreach (var address in iterList)
             {
                 // Selecting "BALTIMORE CITY"
                 FirefoxDriver.Navigate().GoToUrl(BaseUrl);
@@ -163,9 +164,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         // Property must be ground rent
                         address.IsGroundRent = true;
                         // Determine child count of pdf list
-
+                        const string tableXPath = @"//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']";
+                        WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(tableXPath)));
                         //TBD: should we add a proper wait/until here to wait until the table is fully loaded? maybe that is why sometimes I see zero elements being returned.
-                        var pdfLinkArray = FirefoxDriver.FindElements(By.XPath("//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']/tbody/tr"));
+                        var pdfLinkArray = FirefoxDriver.FindElements(By.XPath($"{tableXPath}/tbody/tr"));
 
                         // this throws Argument out of range exception when .Count is zero. TBD: add special handling for the case when there are no items returned, e.g. no links on the page?
                         var registrationPdfElementId = pdfLinkArray[pdfLinkArray.Count - 2].FindElement(By.TagName("a")).GetAttribute("id");
