@@ -5,6 +5,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
+using System.Diagnostics;
 
 namespace DataLibrary.Services.SDATScrapers;
 
@@ -180,6 +181,11 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         // when I start another run, a new window is opened and it is being used until here. However, once we enter the below loop, we will be iterating over all "garbage" windows
                         // from the previous run(s) as well. perhaps it is when we pick up one of those windows, which can be in any random state, that we run into trouble trying to "print" from that window?
                         // we should add code that makes sure there are zero open browser windows prior to each scrape run. otherwise things may easily get out of control.
+
+                        // adding an assertion that there are only two windows open - if there are more or less than 2 than something is majorly wrong, and results will be unexpected
+                        if (FirefoxDriver.WindowHandles.Count != 2) {
+                            throw new InvalidOperationException($"We expect only 2 windows to be open for the driver. If there are more, or fewer, than results will be unexpected. Found this many windows: {FirefoxDriver.WindowHandles.Count}"); 
+                        }
                         foreach (string window in FirefoxDriver.WindowHandles)
                         {
                             if (firstWindow != window)
@@ -188,12 +194,17 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                             }
                         }
                         var accountId = address.AccountId.Trim();
-                        if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
-                        {
-                            PrintOptions printOptions = new();
-                            var pdf = FirefoxDriver.Print(printOptions);
-                            pdf.SaveAsFile($@"d:\pcifr\t\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
-                            pdfDownloaded = true;
+                        try {
+                            if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete"))) {
+                                PrintOptions printOptions = new();
+                                var pdf = FirefoxDriver.Print(printOptions);
+                                pdf.SaveAsFile($@"d:\pcifr\t\GroundRentRegistrationPdfs\BACI\{accountId}.pdf");
+                                pdfDownloaded = true;
+                            }
+                        }
+                        catch (Exception) {
+                            Debugger.Break();
+                            throw;
                         }
                         if (pdfDownloaded is true)
                         {
@@ -225,6 +236,7 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                 }
             }
             ReportTotals(FirefoxDriver);
+            // the below causes us to restart even on success - is that intentional?
             await RestartScrape(amountToScrape);
         }
         // this exception is being hit every single time during my runs.
