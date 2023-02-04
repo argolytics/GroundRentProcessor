@@ -1,6 +1,7 @@
 ﻿using DataLibrary.DbAccess;
 using DataLibrary.DbServices;
 using DataLibrary.Models;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
@@ -66,8 +67,17 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
         using (var uow = _dataContext.CreateUnitOfWork())
         {
             var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-            //AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentNull(amountToScrape);
-            AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentTrue(amountToScrape);
+            AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentNull(amountToScrape);
+            //AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentTrue(amountToScrape);
+        }
+        if (AddressList.Count == 0)
+        {
+            foreach (string window in FirefoxDriver.WindowHandles)
+            {
+                FirefoxDriver.Close();
+            }
+            FirefoxDriver.Quit();
+            Console.WriteLine("Baltimore City complete.");
         }
         currentCount = 0;
         totalCount = AddressList.Count;
@@ -198,11 +208,11 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         foreach (var pdfLink in pdfLinkList)
                         {
                             // Grab pdf metadata: Date and Time, Document Type, Acknowledgement Number, PDF Page Count, and Deed Reference info
-                            dateTimeFiled = pdfLink.FindElement(By.TagName("span")).GetAttribute("id").Where(x => x.ToString().Contains("txtDateFiled")).ToString();
-                            documentFiledType = pdfLink.FindElement(By.TagName("span")).GetAttribute("id").Where(x => x.ToString().Contains("txtDocument")).ToString();
-                            acknowledgementNumber = pdfLink.FindElement(By.TagName("span")).GetAttribute("id").Where(x => x.ToString().Contains("txtAcknowledgement")).ToString();
-                            pdfPageCount = pdfLink.FindElement(By.TagName("span")).GetAttribute("id").Where(x => x.ToString().Contains("txtpages")).ToString();
-                            deedReferenceData = pdfLink.FindElement(By.TagName("span")).GetAttribute("id").Where(x => x.ToString().Contains("txtDeedRef")).ToString();
+                            dateTimeFiled = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDateFiled')]")).Text;
+                            documentFiledType = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDocument')]")).Text;
+                            acknowledgementNumber = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtAcknowledgement')]")).Text;
+                            pdfPageCount = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtpages')]")).Text;
+                            deedReferenceData = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDeedRef')]")).Text;
                             // Select and click on PDF link
                             Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(pdfLink.FindElement(By.TagName("a")).GetAttribute("id"))));
                             Input.Click();
@@ -223,6 +233,7 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                                 FirefoxDriver.Print(printOptions).SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}_{documentFiledType}{acknowledgementNumber}.pdf");
                             }
                             FirefoxDriver.Close();
+                            FirefoxDriver.SwitchTo().Window(baseUrlWindow);
                             firefoxWindowHandleCount = FirefoxDriver.WindowHandles.Count;
                             Console.WriteLine($"Windows open: {firefoxWindowHandleCount}");
                             pdfDownloadCount++;
@@ -276,6 +287,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                             }
                             if (dbTransactionResult is false)
                             {
+                                foreach (string window in FirefoxDriver.WindowHandles)
+                                {
+                                    FirefoxDriver.Close();
+                                }
                                 FirefoxDriver.Quit();
                             }
                             using (var uow = _dataContext.CreateUnitOfWork())
@@ -291,6 +306,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                             }
                             if (dbTransactionResult is false)
                             {
+                                foreach (string window in FirefoxDriver.WindowHandles)
+                                {
+                                    FirefoxDriver.Close();
+                                }
                                 FirefoxDriver.Quit();
                             }
                         }
@@ -311,6 +330,10 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                             }
                             if (dbTransactionResult is false)
                             {
+                                foreach (string window in FirefoxDriver.WindowHandles)
+                                {
+                                    FirefoxDriver.Close();
+                                }
                                 FirefoxDriver.Quit();
                             }
                         }
@@ -382,21 +405,7 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
     private async Task RestartScrape(int amountToScrape)
     {
         AddressList.Clear();
-        using (var uow = _dataContext.CreateUnitOfWork())
-        {
-            var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-            AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentTrue(amountToScrape);
-        }
-        if (AddressList.Count == 0)
-        {
-            FirefoxDriver.Quit();
-            Console.WriteLine("Baltimore City complete.");
-            ReportTotals(FirefoxDriver);
-        }
-        else
-        {
-            await Scrape(amountToScrape);
-        }
+        await Scrape(amountToScrape);
     }
     private void ReportTotals(FirefoxDriver FirefoxDriver)
     {
