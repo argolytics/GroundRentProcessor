@@ -10,7 +10,8 @@
     [YearBuilt]     SMALLINT   NULL,
     [IsGroundRent]  BIT        NULL,
     [IsRedeemed]    BIT        NULL,
-    [PdfDownloaded] BIT        NULL,
+    [PdfCount]      SMALLINT   NULL,
+    [AllPdfsDownloaded] BIT    NULL,
     PRIMARY KEY CLUSTERED ([AccountId] ASC)
 );
 

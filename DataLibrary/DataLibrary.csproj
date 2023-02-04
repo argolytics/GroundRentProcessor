@@ -7,6 +7,53 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DbServices\AlleganyCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\AlleganyCountySqlDataService.cs" />
+    <Compile Remove="DbServices\AnneArundelCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\AnneArundelCountySqlDataService.cs" />
+    <Compile Remove="DbServices\BaltimoreCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\BaltimoreCountySqlDataService.cs" />
+    <Compile Remove="DbServices\BlobService.cs" />
+    <Compile Remove="DbServices\CalvertCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\CalvertCountySqlDataService.cs" />
+    <Compile Remove="DbServices\CarolineCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\CarolineCountySqlDataService.cs" />
+    <Compile Remove="DbServices\CarrollCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\CarrollCountySqlDataService.cs" />
+    <Compile Remove="DbServices\CecilCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\CecilCountySqlDataService.cs" />
+    <Compile Remove="DbServices\CharlesCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\CharlesCountySqlDataService.cs" />
+    <Compile Remove="DbServices\DorchesterCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\DorchesterCountySqlDataService.cs" />
+    <Compile Remove="DbServices\FrederickCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\FrederickCountySqlDataService.cs" />
+    <Compile Remove="DbServices\GarrettCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\GarrettCountySqlDataService.cs" />
+    <Compile Remove="DbServices\HarfordCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\HarfordCountySqlDataService.cs" />
+    <Compile Remove="DbServices\HowardCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\HowardCountySqlDataService.cs" />
+    <Compile Remove="DbServices\KentCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\KentCountySqlDataService.cs" />
+    <Compile Remove="DbServices\MontgomeryCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\MontgomeryCountySqlDataService.cs" />
+    <Compile Remove="DbServices\PrinceGeorgesCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\PrinceGeorgesCountySqlDataService.cs" />
+    <Compile Remove="DbServices\QueenAnnesCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\QueenAnnesCountySqlDataService.cs" />
+    <Compile Remove="DbServices\SomersetCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\SomersetCountySqlDataService.cs" />
+    <Compile Remove="DbServices\StMarysCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\StMarysCountySqlDataService.cs" />
+    <Compile Remove="DbServices\TalbotCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\TalbotCountySqlDataService.cs" />
+    <Compile Remove="DbServices\WashingtonCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\WashingtonCountySqlDataService.cs" />
+    <Compile Remove="DbServices\WicomicoCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\WicomicoCountySqlDataService.cs" />
+    <Compile Remove="DbServices\WorcesterCountyDataServiceFactory.cs" />
+    <Compile Remove="DbServices\WorcesterCountySqlDataService.cs" />
     <Compile Remove="Services\SDATScrapers\BaltimoreCountyScraper.cs" />
     <Compile Remove="Services\SDATScrapers\CecilCountyScraper.cs" />
     <Compile Remove="Services\SDATScrapers\MontgomeryCountyScraper.cs" />
@@ -14,6 +61,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.3.0" />
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Forms" Version="7.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.1" />

@@ -44,7 +44,8 @@ public class CecilCountySqlDataService : IGroundRentProcessorDataService
             {
                 addressModel.AccountId,
                 addressModel.IsGroundRent,
-                addressModel.PdfDownloaded
+                addressModel.PdfCount,
+                addressModel.AllPdfsDownloaded
             };
             await _unitOfWork.Connection.ExecuteAsync("spCecilCounty_CreateOrUpdateSDATScraper", parms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);

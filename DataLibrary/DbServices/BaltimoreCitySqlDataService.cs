@@ -40,10 +40,39 @@ public class BaltimoreCitySqlDataService : IGroundRentProcessorDataService
             {
                 addressModel.AccountId,
                 addressModel.IsGroundRent,
-                addressModel.PdfDownloaded
+                addressModel.PdfCount,
+                addressModel.AllPdfsDownloaded
             };
             await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_CreateOrUpdateSDATScraper", parms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return false;
+        }
+    }
+    public async Task<bool> CreateOrUpdateGroundRentPdf(GroundRentPdfModel groundRentPdfModel)
+    {
+        try
+        {
+            var parms = new
+            {
+                groundRentPdfModel.AccountId,
+                groundRentPdfModel.DocumentFiledType,
+                groundRentPdfModel.AcknowledgementNumber,
+                groundRentPdfModel.DateTimeFiled,
+                groundRentPdfModel.PageAmount,
+                groundRentPdfModel.Book,
+                groundRentPdfModel.Page,
+                groundRentPdfModel.ClerkInitials,
+                groundRentPdfModel.YearRecorded
+            };
+            var dynParms = new DynamicParameters(parms);
+            dynParms.Add("@Id", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_CreateOrUpdateGroundRentPdf", dynParms, commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+            groundRentPdfModel.Id = dynParms.Get<int>("Id");
             return true;
         }
         catch (Exception ex)

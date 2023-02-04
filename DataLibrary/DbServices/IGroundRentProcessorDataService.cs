@@ -7,6 +7,7 @@ namespace DataLibrary.DbServices
         Task CreateOrUpdateFile(AddressModel addressModel);
         Task CreateOrUpdateSDATRedeemedFile(AddressModel addressModel);
         Task<bool> CreateOrUpdateSDATScraper(AddressModel addressModel);
+        Task<bool> CreateOrUpdateGroundRentPdf(GroundRentPdfModel groundRentPdfModel);
         Task<bool> Delete(string accountId);
         Task<List<AddressModel>> ReadTopAmountWhereIsGroundRentNull(int amount);
         Task<List<AddressModel>> ReadTopAmountWhereIsGroundRentTrue(int amount);

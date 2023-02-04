@@ -12,6 +12,7 @@
         public int? YearBuilt { get; set; }
         public bool? IsGroundRent { get; set; }
         public bool? IsRedeemed { get; set; }
-        public bool? PdfDownloaded { get; set; }
+        public int? PdfCount { get; set; }
+        public bool? AllPdfsDownloaded { get; set; }
     }
 }

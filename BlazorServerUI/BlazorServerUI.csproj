@@ -3,10 +3,10 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>6a5536f1-3db8-4489-93dc-0c8573e53624</UserSecretsId>
 	</PropertyGroup>
 	
 	<ItemGroup>
-	  <Content Remove="Pages\Extract.razor" />
 	  <Content Remove="Pages\ScrapeBaltimoreCounty.razor" />
 	  <Content Remove="Pages\ScrapeCecilCounty.razor" />
 	  <Content Remove="Pages\ScrapeMontgomeryCounty.razor" />
@@ -22,7 +22,7 @@
 	</ItemGroup>
 	
 	<ItemGroup><ProjectReference Include="..\DataLibrary\DataLibrary.csproj" /></ItemGroup>
-	<ItemGroup><PackageReference Include="Microsoft.NET.Build.Containers" Version="0.2.7" /><PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" /><PackageReference Include="Testcontainers" Version="2.3.0" /></ItemGroup>
+	<ItemGroup><PackageReference Include="Azure.Storage.Blobs" Version="12.3.0" /><PackageReference Include="Azure.Storage.Files.Shares" Version="12.1.0" /><PackageReference Include="Azure.Storage.Queues" Version="12.2.0" /><PackageReference Include="Microsoft.Extensions.Azure" Version="1.0.0" /><PackageReference Include="Microsoft.NET.Build.Containers" Version="0.2.7" /><PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" /><PackageReference Include="Testcontainers" Version="2.3.0" /></ItemGroup>
 	<ItemGroup>
 	  <Folder Include="wwwroot\data\zipData\" />
 	</ItemGroup>

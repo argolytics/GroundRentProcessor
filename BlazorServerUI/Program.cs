@@ -5,6 +5,8 @@ using DataLibrary.Services.SDATScrapers;
 using AutoMapper;
 using Serilog;
 using DataLibrary;
+using Microsoft.Extensions.Azure;
+using Azure.Storage.Blobs;
 
 namespace GroundRentProcessor;
 
@@ -37,13 +39,42 @@ public class Program
             //    s => new DataContext(
             //        configuration.GetConnectionString(
             //            $"Data Source={dockerHost};Initial Catalog={dockerName};User ID=SA;Password={dockerPassword}")));
+            //builder.Services.AddScoped<AlleganyCountyDataServiceFactory>();
+            //builder.Services.AddScoped<AnneArundelCountyDataServiceFactory>();
             builder.Services.AddScoped<BaltimoreCityDataServiceFactory>();
+            //builder.Services.AddScoped<BaltimoreCountyDataServiceFactory>();
+            //builder.Services.AddScoped<CalvertCountyDataServiceFactory>();
+            //builder.Services.AddScoped<CarolineCountyDataServiceFactory>();
+            //builder.Services.AddScoped<CarrollCountyDataServiceFactory>();
+            //builder.Services.AddScoped<CecilCountyDataServiceFactory>();
+            //builder.Services.AddScoped<CharlesCountyDataServiceFactory>();
+            //builder.Services.AddScoped<DorchesterCountyDataServiceFactory>();
+            //builder.Services.AddScoped<FrederickCountyDataServiceFactory>();
+            //builder.Services.AddScoped<GarrettCountyDataServiceFactory>();
+            //builder.Services.AddScoped<HarfordCountyDataServiceFactory>();
+            //builder.Services.AddScoped<HowardCountyDataServiceFactory>();
+            //builder.Services.AddScoped<KentCountyDataServiceFactory>();
+            //builder.Services.AddScoped<MontgomeryCountyDataServiceFactory>();
+            //builder.Services.AddScoped<PrinceGeorgesCountyDataServiceFactory>();
+            //builder.Services.AddScoped<QueenAnnesCountyDataServiceFactory>();
+            //builder.Services.AddScoped<SomersetCountyDataServiceFactory>();
+            //builder.Services.AddScoped<StMarysCountyDataServiceFactory>();
+            //builder.Services.AddScoped<TalbotCountyDataServiceFactory>();
+            //builder.Services.AddScoped<WashingtonCountyDataServiceFactory>();
+            //builder.Services.AddScoped<WicomicoCountyDataServiceFactory>();
+            //builder.Services.AddScoped<WorcesterCountyDataServiceFactory>();
             builder.Services.AddScoped<BaltimoreCityScraper>();
             builder.Services.AddAutoMapper(typeof(AutoMapperEntryPoint).Assembly);
             var mapper = new MapperConfiguration(options =>
             {
                 options.AddProfile<AddressProfile>();
             });
+            builder.Services.AddAzureClients(b =>
+            {
+                b.AddBlobServiceClient(configuration.GetConnectionString("AzureDevelopmentStorage"));
+            });
+            //builder.Services.AddSingleton(new BlobServiceClient(configuration.GetConnectionString("AzureDevelopmentStorage")));
+            //builder.Services.AddSingleton<BlobService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
