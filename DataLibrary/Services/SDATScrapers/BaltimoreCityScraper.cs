@@ -81,8 +81,6 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
         }
         currentCount = 0;
         totalCount = AddressList.Count;
-        firefoxWindowHandleCount = FirefoxDriver.WindowHandles.Count;
-        Console.WriteLine($"Windows open: {firefoxWindowHandleCount}");
 
         try
         {
@@ -197,51 +195,19 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                         pdfLinkList.Remove(pdfLinkList.Last()); // removing empty last row
                         var pdfTotalCount = pdfLinkList.Count;
                         // Initialize various PDF metadata within scope (and account id)
+                        List<GroundRentPdfModel> groundRentPdfModelList = new();
                         var accountId = address.AccountId.Trim();
-                        string dateTimeFiled = string.Empty;
-                        string documentFiledType = string.Empty;
-                        string acknowledgementNumber = string.Empty;
-                        string pdfPageCount = string.Empty;
-                        string deedReferenceData = string.Empty;
-                        firefoxWindowHandleCount = FirefoxDriver.WindowHandles.Count;
-                        Console.WriteLine($"Windows open: {firefoxWindowHandleCount}");
+                        // Grab pdf metadata: Date and Time, Document Type, Acknowledgement Number, PDF Page Count, and Deed Reference info
                         foreach (var pdfLink in pdfLinkList)
                         {
-                            // Grab pdf metadata: Date and Time, Document Type, Acknowledgement Number, PDF Page Count, and Deed Reference info
-                            dateTimeFiled = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDateFiled')]")).Text;
-                            documentFiledType = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDocument')]")).Text;
-                            acknowledgementNumber = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtAcknowledgement')]")).Text;
-                            pdfPageCount = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtpages')]")).Text;
-                            deedReferenceData = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDeedRef')]")).Text;
-                            // Select and click on PDF link
-                            Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(pdfLink.FindElement(By.TagName("a")).GetAttribute("id"))));
-                            Input.Click();
-                            firefoxWindowHandleCount = FirefoxDriver.WindowHandles.Count;
-                            Console.WriteLine($"Windows open: {firefoxWindowHandleCount}");
-                            // Switch to PDF link window
-                            foreach (string window in FirefoxDriver.WindowHandles)
-                            {
-                                if (baseUrlWindow != window)
-                                {
-                                    FirefoxDriver.SwitchTo().Window(window);
-                                }
-                            }
-                            // Download PDF
-                            if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
-                            {
-                                PrintOptions printOptions = new();
-                                FirefoxDriver.Print(printOptions).SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}_{documentFiledType}{acknowledgementNumber}.pdf");
-                            }
-                            FirefoxDriver.Close();
-                            FirefoxDriver.SwitchTo().Window(baseUrlWindow);
-                            firefoxWindowHandleCount = FirefoxDriver.WindowHandles.Count;
-                            Console.WriteLine($"Windows open: {firefoxWindowHandleCount}");
-                            pdfDownloadCount++;
-                        }
-                        if (pdfDownloadCount == pdfTotalCount)
-                        {
-                            address.PdfCount = pdfTotalCount;
-                            address.AllPdfsDownloaded = true;
+                            GroundRentPdfModel groundRentPdfModel = new();
+                            groundRentPdfModelList.Add(groundRentPdfModel);
+                            groundRentPdfModel.AccountId = accountId;
+                            var dateTimeFiled = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDateFiled')]")).Text;
+                            groundRentPdfModel.DocumentFiledType = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDocument')]")).Text;
+                            groundRentPdfModel.AcknowledgementNumber = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtAcknowledgement')]")).Text;
+                            groundRentPdfModel.PdfPageCount = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtpages')]")).Text;
+                            var deedReferenceData = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDeedRef')]")).Text;
                             bool? dateTimeConverted = null;
                             DateTime dateTimeResult = new();
                             if (DateTime.TryParseExact(dateTimeFiled, "MM/dd/YYYY hh:mm:ss tt", null,
@@ -251,39 +217,15 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                                 dateTimeFiled = string.Empty;
                             }
                             var deedReferenceDataArray = deedReferenceData.Split('/');
-                            var book = deedReferenceDataArray[0];
-                            var page = deedReferenceDataArray[1];
-                            var clerkInitials = deedReferenceDataArray[2];
+                            groundRentPdfModel.Book = deedReferenceDataArray[0];
+                            groundRentPdfModel.Page = deedReferenceDataArray[1];
+                            groundRentPdfModel.ClerkInitials = deedReferenceDataArray[2];
                             int.TryParse(deedReferenceDataArray[3], out var yearRecordedResult);
-                            GroundRentPdfModel groundRentPdfModel = new() 
-                            {
-                                AccountId = accountId,
-                                DocumentFiledType = documentFiledType,
-                                AcknowledgementNumber = acknowledgementNumber,
-                                DateTimeFiled = dateTimeResult,
-                                DateTimeFiledString = dateTimeFiled,
-                                PageAmount = pdfPageCount,
-                                Book = book,
-                                Page = page,
-                                ClerkInitials = clerkInitials,
-                                YearRecorded = yearRecordedResult
-                            };
+                            groundRentPdfModel.YearRecorded = yearRecordedResult;
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
                                 var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                                dbTransactionResult = await baltimoreCityDataService.CreateOrUpdateGroundRentPdf(new GroundRentPdfModel
-                                {
-                                    AccountId = groundRentPdfModel.AccountId,
-                                    DocumentFiledType = groundRentPdfModel.DocumentFiledType,
-                                    AcknowledgementNumber = groundRentPdfModel.AcknowledgementNumber,
-                                    DateTimeFiled = groundRentPdfModel.DateTimeFiled,
-                                    DateTimeFiledString = groundRentPdfModel.DateTimeFiledString,
-                                    PageAmount = groundRentPdfModel.PageAmount,
-                                    Book = groundRentPdfModel.Book,
-                                    Page = groundRentPdfModel.Page,
-                                    ClerkInitials = groundRentPdfModel.ClerkInitials,
-                                    YearRecorded = groundRentPdfModel.YearRecorded
-                                });
+                                dbTransactionResult = await baltimoreCityDataService.CreateOrUpdateGroundRentPdf(groundRentPdfModel);
                             }
                             if (dbTransactionResult is false)
                             {
@@ -293,6 +235,35 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                                 }
                                 FirefoxDriver.Quit();
                             }
+                            // Select and click on PDF link
+                            Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(pdfLink.FindElement(By.TagName("a")).GetAttribute("id"))));
+                            Input.Click();
+                        }
+                        // Switch to PDF link window
+                        foreach (string window in FirefoxDriver.WindowHandles)
+                        {
+                            var groundRentPdfModelListCurrentCount = 0;
+                            var groundRentPdfModelListTotalCount = groundRentPdfModelList.Count;
+                            if (baseUrlWindow != window)
+                            {
+                                FirefoxDriver.SwitchTo().Window(window);
+                                // Download PDF
+                                if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
+                                {
+                                    PrintOptions printOptions = new();
+                                    FirefoxDriver.Print(printOptions).SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}_{groundRentPdfModelList[groundRentPdfModelListCurrentCount].DocumentFiledType}{groundRentPdfModelList[groundRentPdfModelListCurrentCount].AcknowledgementNumber}.pdf");
+                                    pdfDownloadCount++;
+                                }
+                                groundRentPdfModelListCurrentCount++;
+                                FirefoxDriver.Close();
+                            }
+                        }
+                        FirefoxDriver.SwitchTo().Window(baseUrlWindow);
+                        if (pdfDownloadCount == pdfTotalCount)
+                        {
+                            address.PdfCount = pdfTotalCount;
+                            address.AllPdfsDownloaded = true;
+                            
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
                                 var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);

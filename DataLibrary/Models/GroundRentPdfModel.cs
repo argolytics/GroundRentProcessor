@@ -8,7 +8,7 @@ public class GroundRentPdfModel
     public string? AcknowledgementNumber { get; set; }
     public DateTime? DateTimeFiled { get; set; }
     public string? DateTimeFiledString { get; set; }
-    public string? PageAmount { get; set; }
+    public string? PdfPageCount { get; set; }
     public string? Book { get; set; }
     public string? Page { get; set; }
     public string? ClerkInitials { get; set; }

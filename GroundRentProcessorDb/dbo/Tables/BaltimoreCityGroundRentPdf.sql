@@ -6,7 +6,7 @@
     [AcknowledgementNumber] NCHAR(32) NULL, 
     [DateTimeFiled] SMALLDATETIME NULL, 
     [DateTimeFiledString] NVARCHAR(24) NULL, 
-    [PageAmount] NVARCHAR(3) NULL, 
+    [PdfPageCount] NVARCHAR(3) NULL, 
     [Book] NVARCHAR(10) NULL, 
     [Page] NVARCHAR(10) NULL, 
     [ClerkInitials] NVARCHAR(10) NULL, 
