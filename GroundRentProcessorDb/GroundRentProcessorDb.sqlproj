@@ -152,7 +152,6 @@
     <Build Include="dbo\Tables\BaltimoreCity.sql" />
     <Build Include="dbo\Tables\BackUp.sql" />
     <Build Include="dbo\Tables\CecilCounty.sql" />
-    <Build Include="dbo\Stored Procedures\TestCreate.sql" />
     <Build Include="dbo\Tables\BaltimoreCityGroundRentPdf.sql" />
     <Build Include="dbo\Tables\AlleganyCounty.sql" />
     <Build Include="dbo\Tables\AnneArundelCounty.sql" />

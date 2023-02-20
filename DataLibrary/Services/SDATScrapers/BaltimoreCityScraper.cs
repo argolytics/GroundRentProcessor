@@ -204,14 +204,17 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
                             groundRentPdfModelList.Add(groundRentPdfModel);
                             groundRentPdfModel.AccountId = accountId;
                             var dateTimeFiled = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDateFiled')]")).Text;
+                            if (dateTimeFiled[0] != '0')
+                            {
+                                dateTimeFiled += '0' + dateTimeFiled;
+                            }
                             groundRentPdfModel.DocumentFiledType = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDocument')]")).Text;
                             groundRentPdfModel.AcknowledgementNumber = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtAcknowledgement')]")).Text;
                             groundRentPdfModel.PdfPageCount = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtpages')]")).Text;
                             var deedReferenceData = pdfLink.FindElement(By.XPath("//span[contains(@id, 'txtDeedRef')]")).Text;
                             bool? dateTimeConverted = null;
-                            DateTime dateTimeResult = new();
-                            if (DateTime.TryParseExact(dateTimeFiled, "MM/dd/YYYY hh:mm:ss tt", null,
-                                System.Globalization.DateTimeStyles.None, out dateTimeResult))
+                            if (DateTime.TryParseExact(dateTimeFiled, "MM/dd/yyyy hh:mm:ss tt", null,
+                                System.Globalization.DateTimeStyles.None, out var dateTimeResult))
                             {
                                 dateTimeConverted = true;
                                 dateTimeFiled = string.Empty;
