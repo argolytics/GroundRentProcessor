@@ -294,6 +294,7 @@
     <Build Include="dbo\Stored Procedures\PrinceGeorgesCounty\spPrinceGeorgesCounty_Delete.sql" />
     <Build Include="dbo\Stored Procedures\PrinceGeorgesCounty\spPrinceGeorgesCounty_ReadTopAmountWhereIsGroundRentNull.sql" />
     <Build Include="dbo\Stored Procedures\PrinceGeorgesCounty\spPrinceGeorgesCounty_ReadTopAmountWhereIsGroundRentTrue.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_CreateOrUpdateGroundRentPdf.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GroundRentProcessorDb.publish.xml" />

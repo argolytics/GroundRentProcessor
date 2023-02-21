@@ -62,6 +62,7 @@ public class BaltimoreCitySqlDataService : IGroundRentProcessorDataService
                 groundRentPdfModel.AccountId,
                 groundRentPdfModel.DocumentFiledType,
                 groundRentPdfModel.AcknowledgementNumber,
+                groundRentPdfModel.DateTimeFiledString,
                 groundRentPdfModel.DateTimeFiled,
                 groundRentPdfModel.PdfPageCount,
                 groundRentPdfModel.Book,

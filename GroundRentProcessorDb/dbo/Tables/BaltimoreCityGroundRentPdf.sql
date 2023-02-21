@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[BaltimoreCityGroundRentPdf]
 (
-	[Id] INT NOT NULL PRIMARY KEY, 
+	[Id] INT IDENTITY(1,1) NOT NULL, 
     [AccountId] NCHAR(16) NULL, 
     [DocumentFiledType] NCHAR(16) NULL, 
     [AcknowledgementNumber] NCHAR(32) NULL, 
@@ -11,5 +11,6 @@
     [Page] NVARCHAR(10) NULL, 
     [ClerkInitials] NVARCHAR(10) NULL, 
     [YearRecorded] SMALLINT NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_BaltimoreCity_BaltimoreCityGroundRentPdf] FOREIGN KEY ([AccountId]) REFERENCES [dbo].[BaltimoreCity] ([AccountId])
 )
