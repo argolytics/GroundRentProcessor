@@ -2,8 +2,8 @@
 (
 	[Id] INT IDENTITY(1,1) NOT NULL, 
     [AccountId] NCHAR(16) NULL, 
-    [DocumentFiledType] NCHAR(16) NULL, 
-    [AcknowledgementNumber] NCHAR(32) NULL, 
+    [DocumentFiledType] NVARCHAR(16) NULL, 
+    [AcknowledgementNumber] NVARCHAR(32) NULL, 
     [DateTimeFiled] SMALLDATETIME NULL, 
     [DateTimeFiledString] NVARCHAR(24) NULL, 
     [PdfPageCount] NVARCHAR(3) NULL, 
