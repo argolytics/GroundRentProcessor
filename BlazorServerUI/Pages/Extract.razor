@@ -181,6 +181,7 @@
                     foreach (var dto in addressDto)
                     {
                         var addressModel = mapper.Map<AddressModel>(dto);
+                        addressModel.County = "BACI";
                         var baltimoreCityDataService = baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
                         await baltimoreCityDataService.CreateOrUpdateFile(addressModel);
                         count++;

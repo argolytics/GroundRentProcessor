@@ -1,0 +1,1 @@
+﻿select * from dbo.BaltimoreCity where IsGroundRent = 1;

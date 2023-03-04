@@ -6,7 +6,8 @@ using AutoMapper;
 using Serilog;
 using DataLibrary;
 using Microsoft.Extensions.Azure;
-using Azure.Storage.Blobs;
+using DataLibrary.Services.BlobService;
+using DataLibrary.Settings;
 
 namespace GroundRentProcessor;
 
@@ -28,7 +29,9 @@ public class Program
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog(Log.Logger);
             builder.Host.UseSerilog();
-
+            BlobSettings blobSettings = new();
+            configuration.GetSection("BlobSettings").Bind(blobSettings);
+            builder.Services.AddSingleton<BlobSettings>(blobSettings);
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
             builder.Services.AddScoped<IDataContext>(s => new DataContext(configuration.GetConnectionString("Default")));
@@ -39,6 +42,7 @@ public class Program
             //    s => new DataContext(
             //        configuration.GetConnectionString(
             //            $"Data Source={dockerHost};Initial Catalog={dockerName};User ID=SA;Password={dockerPassword}")));
+            builder.Services.AddScoped<ExceptionLogDataServiceFactory>();
             //builder.Services.AddScoped<AlleganyCountyDataServiceFactory>();
             //builder.Services.AddScoped<AnneArundelCountyDataServiceFactory>();
             builder.Services.AddScoped<BaltimoreCityDataServiceFactory>();
@@ -69,12 +73,12 @@ public class Program
             {
                 options.AddProfile<AddressProfile>();
             });
-            builder.Services.AddAzureClients(b =>
+            builder.Services.AddAzureClients(options =>
             {
-                b.AddBlobServiceClient(configuration.GetConnectionString("AzureDevelopmentStorage"));
+                options.AddBlobServiceClient(configuration.GetConnectionString("AzureBlobStorage"));
             });
-            //builder.Services.AddSingleton(new BlobServiceClient(configuration.GetConnectionString("AzureDevelopmentStorage")));
-            //builder.Services.AddSingleton<BlobService>();
+            builder.Services.AddSingleton<IBlobService, BlobService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

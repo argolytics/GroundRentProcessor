@@ -1,0 +1,7 @@
+﻿CREATE TABLE [dbo].[ExceptionLog]
+(
+	[Id] INT NOT NULL IDENTITY(1,1),
+	[AccountId] NCHAR(16) NULL,
+	[Exception] NVARCHAR(64) NULL
+	PRIMARY KEY CLUSTERED ([Id] ASC)
+)

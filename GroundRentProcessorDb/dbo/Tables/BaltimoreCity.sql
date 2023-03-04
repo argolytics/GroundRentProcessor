@@ -1,6 +1,7 @@
 ﻿CREATE TABLE [dbo].[BaltimoreCity] (
-    [AccountId]     NCHAR (16) NOT NULL,
-    [County]        NCHAR (16) NULL,
+    [Id] INT IDENTITY(1,1) NOT NULL,
+    [AccountId]     NCHAR(16) NULL,
+    [County]        NCHAR (4) NULL,
     [AccountNumber] NCHAR (16) NULL,
     [Ward]          NCHAR (2)  NULL,
     [Section]       NCHAR (2)  NULL,
@@ -11,7 +12,7 @@
     [IsGroundRent]  BIT        NULL,
     [IsRedeemed]    BIT        NULL,
     [PdfCount]      SMALLINT   NULL,
-    [AllPdfsDownloaded] BIT    NULL,
-    PRIMARY KEY CLUSTERED ([AccountId] ASC)
+    [AllDataDownloaded] BIT    NULL
+    PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 

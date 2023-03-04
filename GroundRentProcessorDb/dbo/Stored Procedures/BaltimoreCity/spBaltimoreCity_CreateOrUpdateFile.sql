@@ -1,5 +1,6 @@
 ﻿CREATE PROCEDURE [dbo].[spBaltimoreCity_CreateOrUpdateFile]
 	@AccountId NCHAR(16),
+	@County NCHAR(4),
     @Ward NCHAR (2),
 	@Section  NCHAR (2),
     @Block  NCHAR (5),
@@ -15,6 +16,7 @@ BEGIN
 BEGIN
 	UPDATE dbo.[BaltimoreCity] SET
 	[AccountId] = @AccountId,
+	[County] = @County,
     [Ward] = @Ward,
 	[Section] = @Section,
 	[Block] = @Block,
@@ -28,6 +30,7 @@ ELSE
 BEGIN
 	INSERT INTO dbo.[BaltimoreCity](
 	[AccountId],
+	[County],
     [Ward],
 	[Section],
 	[Block],
@@ -37,6 +40,7 @@ BEGIN
 
 	VALUES(
 	@AccountId,
+	@County,
 	@Ward,
 	@Section,
 	@Block,

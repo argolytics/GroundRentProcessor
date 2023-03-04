@@ -5,32 +5,61 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
+using System.Text.RegularExpressions;
 
 namespace DataLibrary.Services.SDATScrapers;
 
-public class BaltimoreCityScraper : IRealPropertySearchScraper
+public partial class BaltimoreCityScraper : IRealPropertySearchScraper
 {
     private readonly IDataContext _dataContext;
     private readonly BaltimoreCityDataServiceFactory _baltimoreCityDataServiceFactory;
+    private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
     FirefoxDriver FirefoxDriver;
-    private readonly string FirefoxDriverPath = @"C:\WebDrivers\geckodriver.exe";
-    private readonly string FirefoxProfile = @"C:\Users\Jason\AppData\Local\Mozilla\Firefox\Profiles\7mdph1dj.AspxConverter";
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
-    private List<AddressModel> AddressList = new();
+    private readonly string FirefoxDriverPath = @"C:\WebDrivers\geckodriver.exe";
+    private readonly string FirefoxProfile = @"C:\Users\Jason\AppData\Local\Mozilla\Firefox\Profiles\7mdph1dj.AspxConverter";
+    private readonly string BACIDropDownSelect = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlCounty > option:nth-child(4)";
+    private readonly string PropertyAccountIdentifierSelect = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlSearchType > option:nth-child(3)";
+    private readonly string ContinueClick = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StartNavigationTemplateContainerID_btnContinue";
+    private readonly string WardInput = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtWard";
+    private readonly string SectionInput = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtSection";
+    private readonly string BlockInput = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtBlock";
+    private readonly string LotInput = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtLot";
+    private readonly string NextClick = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StepNavigationTemplateContainerID_btnStepNextButton";
+    private readonly string GenericErrorTag = "#cphMainContentArea_ucSearchType_lblErr";
+    private readonly string NoRecordsMessage = "There are no records that match your criteria";
+    private readonly string InvisibilityCatch = "head > style:nth-child(29)";
+    private readonly string GroundRentRegistrationLinkClick = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucDetailsSearch_dlstDetaisSearch_lnkGroundRentRegistration_0";
+    private readonly string GroundRentErrorTag = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr";
+    private readonly string NoGroundRentMessage = "There is currently no ground rent";
+    private readonly string GroundRentMetadataTable = @"//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']";
+    private readonly string PdfSaveFilePath = @"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\";
     private string BaseUrl { get; set; } = "https://sdat.dat.maryland.gov/RealProperty/Pages/default.aspx";
+    [GeneratedRegex("[^\\d+]")] private static partial Regex DateTimeFiledRegex();
+    private enum ExceptionLog 
+    { 
+        TransactionFailAddressNotGroundRent,
+        TransactionFailCouldNotStoreMetadata,
+        TransactionFailCouldNotStoreAddress,
+        TransactionFailCouldNotDownloadPdf,
+        TransactionFailCouldNotDeleteAddress,
+        DateTimeFiledIsNull
+    }
+    private List<AddressModel> AddressList = new();
+    private List<string?> CatchList = new();
     private bool? dbTransactionResult = null;
-    private int currentCount;
-    private int totalCount;
-    private decimal percentComplete;
+    private bool? allDataDownloaded = true;
     private int exceptionCount = 0;
 
     public BaltimoreCityScraper(
         IDataContext dataContext,
-        BaltimoreCityDataServiceFactory baltimoreCityDataServiceFactory)
+        BaltimoreCityDataServiceFactory baltimoreCityDataServiceFactory,
+        ExceptionLogDataServiceFactory exceptionLogDataServiceFactory)
     {
         _dataContext = dataContext;
         _baltimoreCityDataServiceFactory = baltimoreCityDataServiceFactory;
+        _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
 
         FirefoxProfile firefoxProfile = new(FirefoxProfile);
         FirefoxOptions FirefoxOptions = new()
@@ -46,6 +75,29 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
             typeof(ElementNotSelectableException),
             typeof(ElementNotVisibleException));
     }
+    private async Task RestartScrape(int amountToScrape)
+    {
+        AddressList.Clear();
+        await Scrape(amountToScrape);
+    }
+    private static void ReportTotals(FirefoxDriver FirefoxDriver, int addressListIterationCount, int addressListIterationTotal)
+    {
+        var percentComplete = addressListIterationTotal == 0 ? 0 : decimal.Divide(addressListIterationCount, addressListIterationTotal);
+        Console.WriteLine($"{FirefoxDriver} has processed {percentComplete:P0} of {addressListIterationTotal} addresses.");
+    }
+    public async Task LogException(string accountId, string exception)
+    {
+        ExceptionLogModel exceptionLogModel = new()
+        {
+            AccountId = accountId,
+            Exception = exception
+        };
+        using (var uow = _dataContext.CreateUnitOfWork())
+        {
+            var exceptionLogDataService = _exceptionLogDataServiceFactory.CreateExceptionLogDataService(uow);
+            await exceptionLogDataService.Create(exceptionLogModel);
+        }
+    }
     public async Task Scrape(int amountToScrape)
     {
         // Define baseUrlWindow
@@ -54,347 +106,337 @@ public class BaltimoreCityScraper : IRealPropertySearchScraper
         using (var uow = _dataContext.CreateUnitOfWork())
         {
             var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-            AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentNull(amountToScrape);
-            //AddressList = await baltimoreCityDataService.ReadTopAmountWhereIsGroundRentTrue(amountToScrape);
+            AddressList = await baltimoreCityDataService.ReadAddressTopAmountWhereIsGroundRentNull(amountToScrape);
+            //AddressList = await baltimoreCityDataService.ReadAddressTopAmountWhereIsGroundRentTrue(amountToScrape);
         }
         if (AddressList.Count == 0)
         {
-            foreach (string window in FirefoxDriver.WindowHandles)
-            {
-                FirefoxDriver.Close();
-            }
+            foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
             Console.WriteLine("Baltimore City complete.");
         }
-        currentCount = 0;
-        totalCount = AddressList.Count;
-
+        var addressListIterationCount = 0;
+        var addressListIterationTotal = AddressList.Count;
         try
         {
             var iterList = AddressList.ToList();
-            foreach (var address in iterList)
+            foreach (var iterAddress in iterList)
             {
-                // Selecting "BALTIMORE CITY"
+                iterAddress.County = "BACI";
+                // Selecting appropriate county
                 FirefoxDriver.Navigate().GoToUrl(BaseUrl);
-                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlCounty > option:nth-child(4)")));
+                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(BACIDropDownSelect)));
                 Input.Click();
-
                 // Selecting "PROPERTY ACCOUNT IDENTIFIER"
-                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlSearchType > option:nth-child(3)")));
+                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(PropertyAccountIdentifierSelect)));
                 Input.Click();
-
                 // Click Continue button
-                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StartNavigationTemplateContainerID_btnContinue")));
+                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(ContinueClick)));
                 Input.Click();
-
-                // Input Ward
-                Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtWard")));
-                Input.Clear();
-                Input.SendKeys(address.Ward);
-
-                // Input Section
-                Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtSection")));
-                Input.Clear();
-                Input.SendKeys(address.Section);
-
-                // Input Block
-                Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtBlock")));
-                Input.Clear();
-                Input.SendKeys(address.Block);
-
-                // Input Lot
-                Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucEnterData_txtLot")));
-                Input.Clear();
-                Input.SendKeys(address.Lot);
-
+                if(iterAddress.County == "BACI")
+                {
+                    // Input Ward, Section, Block, and Lot
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(WardInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Ward);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(SectionInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Section);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(BlockInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Block);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(LotInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Lot);
+                }
                 // Click Next button
-                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StepNavigationTemplateContainerID_btnStepNextButton")));
+                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(NextClick)));
                 Input.Click();
-                if (FirefoxDriver.FindElements(By.CssSelector("#cphMainContentArea_ucSearchType_lblErr")).Count != 0)
+                // Check for any error labels
+                if (FirefoxDriver.FindElements(By.CssSelector(GenericErrorTag)).Count != 0)
                 {
                     // If address does not exist in SDAT
-                    if (FirefoxDriver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_lblErr"))
-                        .Text.Contains("There are no records that match your criteria"))
+                    if (FirefoxDriver.FindElement(By.CssSelector(GenericErrorTag))
+                        .Text.Contains(NoRecordsMessage))
                     {
                         using (var uow = _dataContext.CreateUnitOfWork())
                         {
                             var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                            dbTransactionResult = await baltimoreCityDataService.Delete(address.AccountId);
+                            dbTransactionResult = await baltimoreCityDataService.DeleteAddress(iterAddress.AccountId);
                         }
-                        if (dbTransactionResult is false)
-                        {
-                            Console.WriteLine($"Could not delete {address.AccountId}. Quitting scrape.");
-                            FirefoxDriver.Quit();
-                        }
-                        currentCount++;
-                        Console.WriteLine($"{address.AccountId.Trim()} does not exist and was deleted.");
+                        addressListIterationCount++;
+                        AddressList.Remove(iterAddress);
                     }
+                    // There is an error tag that is different from the normal "no records exist" message
                     else
                     {
-                        Console.WriteLine($"{FirefoxDriver} found {address.AccountId.Trim()} does not exist and tried to delete, but the error message text is different than usual: {FirefoxDriver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Text}. Quitting scrape.");
-                        FirefoxDriver.Quit();
+                        await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotDeleteAddress.ToString());
                     }
+                    addressListIterationCount++;
+                    AddressList.Remove(iterAddress);
                 }
+                // There are no error tags so we are free to check if address is fee simple or ground rent
                 else
                 {
                     // Click Ground Rent Registration link
-                    WebDriverWait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector("head > style:nth-child(29)")));
-                    Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucDetailsSearch_dlstDetaisSearch_lnkGroundRentRegistration_0")));
+                    WebDriverWait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector(InvisibilityCatch)));
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(GroundRentRegistrationLinkClick)));
                     Input.Click();
-                    // Condition: check if html has ground rent error tag (meaning property has no ground rent registered)
-                    if (FirefoxDriver.FindElements(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr")).Count != 0)
+                    // Check if html has ground rent error tag (meaning property has no ground rent registered)
+                    if (FirefoxDriver.FindElements(By.CssSelector(GroundRentErrorTag)).Count != 0)
                     {
-                        if (FirefoxDriver.FindElement(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_lblErr"))
-                            .Text.Contains("There is currently no ground rent"))
+                        if (FirefoxDriver.FindElement(By.CssSelector(GroundRentErrorTag))
+                            .Text.Contains(NoGroundRentMessage))
                         {
-                            // Property is not ground rent
-                            address.IsGroundRent = false;
+                            // Property is fee simple (not ground rent)
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
                                 var BaltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                                dbTransactionResult = await BaltimoreCityDataService.CreateOrUpdateSDATScraper(new AddressModel
+                                dbTransactionResult = await BaltimoreCityDataService.UpdateAddress(new AddressModel()
                                 {
-                                    AccountId = address.AccountId,
-                                    IsGroundRent = address.IsGroundRent,
-                                    AllPdfsDownloaded = null
+                                    AccountId = iterAddress.AccountId,
+                                    County = iterAddress.County,
+                                    AccountNumber = iterAddress.AccountNumber,
+                                    Ward = iterAddress.Ward,
+                                    Section = iterAddress.Section,
+                                    Block = iterAddress.Block,
+                                    Lot = iterAddress.Lot,
+                                    LandUseCode = iterAddress.LandUseCode,
+                                    YearBuilt = iterAddress.YearBuilt,
+                                    IsGroundRent = false,
+                                    IsRedeemed = null,
+                                    PdfCount = 0,
+                                    AllDataDownloaded = null
                                 });
-                                currentCount++;
-                                AddressList.Remove(address);
                             }
                             if (dbTransactionResult is false)
                             {
-                                // Something wrong happened and I do not want the application to skip over this address
-                                Console.WriteLine($"Db could not complete transaction for {address.AccountId.Trim()}. Quitting scrape.");
-                                FirefoxDriver.Quit();
+                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailAddressNotGroundRent.ToString());
                             }
                         }
+                        addressListIterationCount++;
+                        AddressList.Remove(iterAddress);
                     }
+                    // No ground rent error tag, therefore must be ground rent
                     else
                     {
-                        // Property must be ground rent
-                        address.IsGroundRent = true;
-                        // Fully load XPath table
-                        const string tableXPath = @"//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']";
-                        WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(tableXPath)));
-                        // Initialize variables keeping track of the total and current PDF link list count
-                        var pdfLinkListCurrentCount = 1;
+                        // Load ground rent metadata table
+                        WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(GroundRentMetadataTable)));
+                        // Initialize variables keeping track of the total and current metadata collection count
+                        var metadataCollectionCurrentCount = 0;
                         var pdfDownloadCount = 0;
-                        var pdfLinkListTotalCount = FirefoxDriver.FindElements(By.XPath($"{tableXPath}/tbody/tr")).Count - 2;
-                        var accountId = address.AccountId.Trim();
+                        var metadataCollectionTotalCount = FirefoxDriver.FindElements(By.XPath($"{GroundRentMetadataTable}/tbody/tr")).Count;
                         List<GroundRentPdfModel> groundRentPdfModelList = new();
-                        // Iterate through PDF link list to download PDF and capture metadata including:
-                        // DateTime filed, Document Type, Acknowledgement Number, PDF Page Count, and Deed Reference info
-                        // Since DOM is refreshed when returning to baseUrlWindow, the pdfLinkList element Ids will always
-                        // be different, so the following for loop ensures the next link will be grabbed
-                        for (int i = 0; i <= pdfLinkListTotalCount - 1; i++)
+                        for (metadataCollectionCurrentCount = 0; metadataCollectionCurrentCount < metadataCollectionTotalCount;)
                         {
-                            // Determine PDF link list count by removing empty first and last links
-                            var pdfLinkList = FirefoxDriver.FindElements(By.XPath($"{tableXPath}/tbody/tr")).ToList();
-                            pdfLinkList.Remove(pdfLinkList[0]); // removing header row
-                            pdfLinkList.Remove(pdfLinkList.Last()); // removing empty last row
-                            GroundRentPdfModel groundRentPdfModel = new();
-                            groundRentPdfModelList.Add(groundRentPdfModel);
-                            groundRentPdfModel.AccountId = accountId;
-                            var dateTimeFiledString = pdfLinkList[i].FindElement(By.XPath("//span[contains(@id, 'txtDateFiled')]")).Text;
-                            if (dateTimeFiledString[0] != '0')
+                            if (metadataCollectionCurrentCount == 0 || 
+                                metadataCollectionCurrentCount == metadataCollectionTotalCount - 1)
                             {
-                                dateTimeFiledString = '0' + dateTimeFiledString;
+                                metadataCollectionCurrentCount++;
+                                continue;
                             }
-                            groundRentPdfModel.DateTimeFiledString = dateTimeFiledString;
-                            DateTime? DateTimeFiled = DateTime.TryParse(dateTimeFiledString, out DateTime tempDate) ? tempDate : null;
-                            groundRentPdfModel.DateTimeFiled = DateTimeFiled;
-                            groundRentPdfModel.DocumentFiledType = pdfLinkList[i].FindElement(By.XPath("//span[contains(@id, 'txtDocument')]")).Text;
-                            groundRentPdfModel.AcknowledgementNumber = pdfLinkList[i].FindElement(By.XPath("//span[contains(@id, 'txtAcknowledgement')]")).Text;
-                            groundRentPdfModel.PdfPageCount = pdfLinkList[i].FindElement(By.XPath("//span[contains(@id, 'txtpages')]")).Text;
-                            var deedReferenceData = pdfLinkList[i].FindElement(By.XPath("//span[contains(@id, 'txtDeedRef')]")).Text;
-                            
-                            var deedReferenceDataArray = deedReferenceData.Split('/');
-                            groundRentPdfModel.Book = deedReferenceDataArray[0];
-                            groundRentPdfModel.Page = deedReferenceDataArray[1];
-                            groundRentPdfModel.ClerkInitials = deedReferenceDataArray[2];
-                            int.TryParse(deedReferenceDataArray[3], out var yearRecordedResult);
-                            groundRentPdfModel.YearRecorded = yearRecordedResult;
-                            using (var uow = _dataContext.CreateUnitOfWork())
                             {
-                                var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                                dbTransactionResult = await baltimoreCityDataService.CreateOrUpdateGroundRentPdf(groundRentPdfModel);
-                                pdfLinkListCurrentCount++;
-                            }
-                            if (dbTransactionResult is false)
-                            {
+                                // Per iteration, reinitialize the metadata collection to avoid stale element exception
+                                WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(GroundRentMetadataTable)));
+                                IReadOnlyCollection<IWebElement> metadataCollection = FirefoxDriver.FindElements(By.XPath($"{GroundRentMetadataTable}/tbody/tr"));
+                                GroundRentPdfModel groundRentPdfModel = new();
+                                groundRentPdfModelList.Add(groundRentPdfModel);
+                                groundRentPdfModel.AddressId = iterAddress.Id;
+                                groundRentPdfModel.AccountId = iterAddress.AccountId;
+                                string? dateTimeFiledString = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult_txtDateFiled_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                                // DateTimeFiled cannot be null since it is used as the sql table's Primary Key
+                                // so we check for null here. If null, we skip metadata and pdf download but make note in log
+                                if (dateTimeFiledString is null)
+                                {
+                                    await LogException(iterAddress.AccountId, ExceptionLog.DateTimeFiledIsNull.ToString());
+                                    allDataDownloaded = false;
+                                    metadataCollectionCurrentCount++;
+                                    continue;
+                                }
+                                // Ensure there are always two digits for the month for a given date
+                                // so that DateTime.TryParse can parse dateTimeFiledString
+                                if (dateTimeFiledString[0] != '1')
+                                {
+                                    if (!dateTimeFiledString.StartsWith("1/"))
+                                    {
+                                        dateTimeFiledString = '0' + dateTimeFiledString;
+                                    }
+                                }
+                                DateTime? DateTimeFiled = DateTime.TryParse(dateTimeFiledString, out DateTime tempDate) ? tempDate : null;
+                                groundRentPdfModel.DateTimeFiled = DateTimeFiled;
+                                groundRentPdfModel.DocumentFiledType = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult_txtDocument_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                                groundRentPdfModel.AcknowledgementNumber = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult_txtAcknowledgementNub_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                                groundRentPdfModel.PdfPageCount = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult_txtpages_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                                string? deedReferenceData = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult_txtDeedRef_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                                var deedReferenceDataArray = deedReferenceData.Split('/') ?? null;
+                                groundRentPdfModel.Book = deedReferenceDataArray[0] ?? null;
+                                groundRentPdfModel.Page = deedReferenceDataArray[1] ?? null;
+                                groundRentPdfModel.ClerkInitials = deedReferenceDataArray[2] ?? null;
+                                int.TryParse(deedReferenceDataArray[3], out var yearRecordedResult);
+                                groundRentPdfModel.YearRecorded = yearRecordedResult;
+                                using (var uow = _dataContext.CreateUnitOfWork())
+                                {
+                                    var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                                    dbTransactionResult = await baltimoreCityDataService.CreateGroundRentPdf(new GroundRentPdfModel()
+                                    {
+                                        AccountId = groundRentPdfModel.AccountId,
+                                        AddressId = groundRentPdfModel.AddressId,
+                                        AcknowledgementNumber = groundRentPdfModel.AcknowledgementNumber,
+                                        DocumentFiledType = groundRentPdfModel.DocumentFiledType,
+                                        DateTimeFiled = groundRentPdfModel.DateTimeFiled,
+                                        PdfPageCount = groundRentPdfModel.PdfPageCount,
+                                        Book = groundRentPdfModel.Book,
+                                        Page = groundRentPdfModel.Page,
+                                        ClerkInitials = groundRentPdfModel.ClerkInitials,
+                                        YearRecorded = groundRentPdfModel.YearRecorded
+                                    });
+                                }
+                                if (dbTransactionResult is false)
+                                {
+                                    await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
+                                    allDataDownloaded = false;
+                                    metadataCollectionCurrentCount++;
+                                    // If we cannot store metadata, we do not want the accompanying pdf, so we continue here
+                                    continue;
+                                }
+                                metadataCollectionCurrentCount++;
+                                // Click and open pdf
+                                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(metadataCollection.ElementAt(metadataCollectionCurrentCount - 1).FindElement(By.TagName("a")).GetAttribute("id"))));
+                                Input.Click();
+                                // Switch to pdf window
                                 foreach (string window in FirefoxDriver.WindowHandles)
                                 {
-                                    FirefoxDriver.Close();
-                                }
-                                Console.WriteLine($"Address {accountId} could not store PDF meta data for PDF {groundRentPdfModel.Id}");
-                                FirefoxDriver.Quit();
-                            }
-                            // Select and click on PDF link
-                            Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(pdfLinkList[i].FindElement(By.TagName("a")).GetAttribute("id"))));
-                            Input.Click();
-                            // Switch to PDF link window
-                            foreach (string window in FirefoxDriver.WindowHandles)
-                            {
-                                if (baseUrlWindow != window)
-                                {
-                                    FirefoxDriver.SwitchTo().Window(window);
-                                }
-                            }
-                            // Download PDF
-                            if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
-                            {
-                                PrintOptions printOptions = new();
-                                FirefoxDriver.Print(printOptions).SaveAsFile($@"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\{accountId}_{groundRentPdfModelList[i].DocumentFiledType}{groundRentPdfModelList[i].AcknowledgementNumber}.pdf");
-                                pdfDownloadCount++;
-                            }
-                            // Close PDF window and switch to baseUrlWindow
-                            FirefoxDriver.Close();
-                            foreach (string window in FirefoxDriver.WindowHandles)
-                            {
-                                if (baseUrlWindow != window)
-                                {
-                                    FirefoxDriver.SwitchTo().Window(baseUrlWindow);
+                                    if (baseUrlWindow != window)
+                                    {
+                                        FirefoxDriver.SwitchTo().Window(window);
+                                        if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
+                                        {
+                                            // Download pdf, store locally (change later to blob db)
+                                            PrintOptions printOptions = new();
+                                            FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
+                                            pdfDownloadCount++;
+                                            groundRentPdfModelList.RemoveAt(0);
+                                            // Close pdf window and switch back to baseUrlWindow
+                                            FirefoxDriver.Close();
+                                            FirefoxDriver.SwitchTo().Window(baseUrlWindow);
+                                        }
+                                        else
+                                        {
+                                            await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotDownloadPdf.ToString());
+                                            allDataDownloaded = false;
+                                        }
+                                    }
                                 }
                             }
-                            //// Click on previous button to go back to main address page
-                            //Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_FinishNavigationTemplateContainerID_StepPreviousButton")));
-                            //Input.Click();
-                            //// Click on Ground Rent Registration link once again
-                            //Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucDetailsSearch_dlstDetaisSearch_lnkGroundRentRegistration_0")));
-                            //Input.Click();
                         }
-                        // Having iterated through all PDFs and meta data, double check that all windows
-                        // other than baseUrlWindow are closed
-                        foreach(string window in FirefoxDriver.WindowHandles)
+                        // Ensure all pdf windows are closed, then switch to baseUrlWindow
+                        foreach (string window in FirefoxDriver.WindowHandles)
                         {
-                            if (baseUrlWindow != window)
-                            {
-                                FirefoxDriver.Close();
-                            }
+                            if (baseUrlWindow != window) FirefoxDriver.Close();
                         }
                         FirefoxDriver.SwitchTo().Window(baseUrlWindow);
-                        // Check to see if PDF download count and PDF link list current count equal PDF total count
-                        if ((pdfDownloadCount == pdfLinkListTotalCount) && 
-                            (pdfLinkListCurrentCount == pdfLinkListTotalCount))
+                        // Check if all metadata and pdfs stored in db
+                        if (allDataDownloaded is true)
                         {
-                            address.PdfCount = pdfLinkListTotalCount;
-                            address.AllPdfsDownloaded = true;
-                            
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
                                 var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                                dbTransactionResult = await baltimoreCityDataService.CreateOrUpdateSDATScraper(new AddressModel
+                                dbTransactionResult = await baltimoreCityDataService.UpdateAddress(new AddressModel()
                                 {
-                                    AccountId = address.AccountId,
-                                    IsGroundRent = address.IsGroundRent,
-                                    PdfCount = address.PdfCount,
-                                    AllPdfsDownloaded = address.AllPdfsDownloaded
+                                    AccountId = iterAddress.AccountId,
+                                    County = iterAddress.County,
+                                    AccountNumber = iterAddress.AccountNumber,
+                                    Ward = iterAddress.Ward,
+                                    Section = iterAddress.Section,
+                                    Block = iterAddress.Block,
+                                    Lot = iterAddress.Lot,
+                                    LandUseCode = iterAddress.LandUseCode,
+                                    YearBuilt = iterAddress.YearBuilt,
+                                    IsGroundRent = true,
+                                    IsRedeemed = iterAddress.IsRedeemed,
+                                    PdfCount = pdfDownloadCount,
+                                    AllDataDownloaded = true
                                 });
                             }
                             if (dbTransactionResult is false)
                             {
-                                foreach (string window in FirefoxDriver.WindowHandles)
-                                {
-                                    FirefoxDriver.Close();
-                                }
-                                FirefoxDriver.Quit();
+                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
                             }
                         }
+                        // pdf download count or metadata collection current are not count equal to pdf total count
                         else
                         {
-                            address.PdfCount = pdfDownloadCount;
-                            address.AllPdfsDownloaded = false;
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
                                 var baltimoreCityDataService = _baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                                dbTransactionResult = await baltimoreCityDataService.CreateOrUpdateSDATScraper(new AddressModel
+                                dbTransactionResult = await baltimoreCityDataService.UpdateAddress(new AddressModel()
                                 {
-                                    AccountId = address.AccountId,
-                                    IsGroundRent = address.IsGroundRent,
-                                    PdfCount = address.PdfCount,
-                                    AllPdfsDownloaded = address.AllPdfsDownloaded
+                                    AccountId = iterAddress.AccountId,
+                                    County = iterAddress.County,
+                                    AccountNumber = iterAddress.AccountNumber,
+                                    Ward = iterAddress.Ward,
+                                    Section = iterAddress.Section,
+                                    Block = iterAddress.Block,
+                                    Lot = iterAddress.Lot,
+                                    LandUseCode = iterAddress.LandUseCode,
+                                    YearBuilt = iterAddress.YearBuilt,
+                                    IsGroundRent = true,
+                                    IsRedeemed = iterAddress.IsRedeemed,
+                                    PdfCount = pdfDownloadCount,
+                                    AllDataDownloaded = false
                                 });
                             }
                             if (dbTransactionResult is false)
                             {
-                                foreach (string window in FirefoxDriver.WindowHandles)
-                                {
-                                    FirefoxDriver.Close();
-                                }
-                                FirefoxDriver.Quit();
+                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
                             }
                         }
-                        currentCount++;
-                        AddressList.Remove(address);
+                        addressListIterationCount++;
+                        AddressList.Remove(iterAddress);
                     }
                 }
             }
-            ReportTotals(FirefoxDriver);
-            await RestartScrape(amountToScrape);
         }
-        catch(ArgumentOutOfRangeException argumentOutOfRangeException)
+        catch (ElementClickInterceptedException elementClickInterceptedException)
         {
             exceptionCount++;
-            Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {argumentOutOfRangeException.Message}");
-            await RestartScrape(amountToScrape);
-        }
-        catch(ElementClickInterceptedException elementClickInterceptedException)
-        {
-            exceptionCount++;
+            CatchList.Add(elementClickInterceptedException.Message);
             Console.WriteLine($"Total exception count: {exceptionCount}");
             Console.WriteLine($"Error Message: {elementClickInterceptedException.Message}");
+            if (exceptionCount > 5) FirefoxDriver.Quit();
             await RestartScrape(amountToScrape);
         }
-        catch(WebDriverTimeoutException webDriverTimeoutException)
+        catch (WebDriverTimeoutException webDriverTimeoutException)
         {
             exceptionCount++;
+            CatchList.Add(webDriverTimeoutException.Message);
             Console.WriteLine($"Total exception count: {exceptionCount}");
             Console.WriteLine($"Error Message: {webDriverTimeoutException.Message}");
+            if (exceptionCount > 5) FirefoxDriver.Quit();
             await RestartScrape(amountToScrape);
         }
-        catch (NullReferenceException nullReferenceException)
+        catch (NoSuchWindowException noSuchWindowException)
         {
             exceptionCount++;
+            CatchList.Add(noSuchWindowException.Message);
             Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {nullReferenceException.Message}");
-            await RestartScrape(amountToScrape);
+            Console.WriteLine($"Error Message: {noSuchWindowException.Message}");
+            if (exceptionCount > 5) FirefoxDriver.Quit();
+            FirefoxDriver.Quit();
         }
-        //catch(NoSuchWindowException noSuchWindowException)
-        //{
-        //    exceptionCount++;
-        //    Console.WriteLine($"Total exception count: {exceptionCount}");
-        //    Console.WriteLine($"Error Message: {noSuchWindowException.Message}");
-        //    FirefoxProfile firefoxProfile = new(FirefoxProfile);
-        //    FirefoxOptions FirefoxOptions = new()
-        //    {
-        //        Profile = firefoxProfile,
-        //    };
-        //    FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
-        //    WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
-        //    WebDriverWait.IgnoreExceptionTypes(
-        //        typeof(NoSuchElementException),
-        //        typeof(StaleElementReferenceException),
-        //        typeof(ElementNotSelectableException),
-        //        typeof(ElementNotVisibleException));
-        //    await RestartScrape(amountToScrape);
-        //}
-        catch (WebDriverException webDriverException)
+        catch (Exception e)
         {
             exceptionCount++;
+            CatchList.Add(e.Message);
             Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {webDriverException.Message}");
+            Console.WriteLine($"Error Message: {e.Message}");
+            if (exceptionCount > 5) FirefoxDriver.Quit();
             await RestartScrape(amountToScrape);
         }
-    }
-    private async Task RestartScrape(int amountToScrape)
-    {
-        AddressList.Clear();
-        await Scrape(amountToScrape);
-    }
-    private void ReportTotals(FirefoxDriver FirefoxDriver)
-    {
-        percentComplete = totalCount == 0 ? 0 : decimal.Divide(currentCount, totalCount);
-        Console.WriteLine($"{FirefoxDriver} has processed {percentComplete:P0} of {totalCount} addresses.");
+        finally
+        {
+            CatchList.Clear();
+            ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
+        }
     }
 }

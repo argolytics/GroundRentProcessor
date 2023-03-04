@@ -144,6 +144,7 @@
     <Folder Include="dbo\Stored Procedures\WashingtonCounty" />
     <Folder Include="dbo\Stored Procedures\WicomicoCounty" />
     <Folder Include="dbo\Stored Procedures\WorcesterCounty" />
+    <Folder Include="dbo\Stored Procedures\ExceptionLog" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\BaltimoreCounty.sql" />
@@ -174,10 +175,10 @@
     <Build Include="dbo\Tables\WicomicoCounty.sql" />
     <Build Include="dbo\Tables\WorcesterCounty.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_CreateOrUpdateFile.sql" />
-    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_CreateOrUpdateSDATScraper.sql" />
-    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_Delete.sql" />
-    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_ReadTopAmountWhereIsGroundRentNull.sql" />
-    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_ReadTopAmountWhereIsGroundRentTrue.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_CreateAddress.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_DeleteAddress.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_ReadAddressTopAmountWhereIsGroundRentNull.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_ReadAddressTopAmountWhereIsGroundRentTrue.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCounty\spBaltimoreCounty_CreateOrUpdateFile.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCounty\spBaltimoreCounty_CreateOrUpdateSDATRedeemedFile.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCounty\spBaltimoreCounty_CreateOrUpdateSDATScraper.sql" />
@@ -294,7 +295,12 @@
     <Build Include="dbo\Stored Procedures\PrinceGeorgesCounty\spPrinceGeorgesCounty_Delete.sql" />
     <Build Include="dbo\Stored Procedures\PrinceGeorgesCounty\spPrinceGeorgesCounty_ReadTopAmountWhereIsGroundRentNull.sql" />
     <Build Include="dbo\Stored Procedures\PrinceGeorgesCounty\spPrinceGeorgesCounty_ReadTopAmountWhereIsGroundRentTrue.sql" />
-    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_CreateOrUpdateGroundRentPdf.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_CreateGroundRentPdf.sql" />
+    <Build Include="dbo\Tables\ExceptionLog.sql" />
+    <Build Include="dbo\Stored Procedures\ExceptionLog\spExceptionLog_Create.sql" />
+    <Build Include="dbo\Stored Procedures\ExceptionLog\spExceptionLog_Delete.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_UpdateAddress.sql" />
+    <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_UpdateGroundRentPdf.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GroundRentProcessorDb.publish.xml" />
