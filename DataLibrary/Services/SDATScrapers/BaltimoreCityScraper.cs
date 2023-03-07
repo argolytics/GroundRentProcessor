@@ -1,17 +1,21 @@
-﻿using DataLibrary.DbAccess;
+﻿using System.Text.RegularExpressions;
+using Azure.Storage.Blobs;
+using DataLibrary.DbAccess;
 using DataLibrary.DbServices;
 using DataLibrary.Models;
+using DataLibrary.Services.BlobService;
+using Microsoft.Extensions.Configuration;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-using System.Text.RegularExpressions;
 
 namespace DataLibrary.Services.SDATScrapers;
 
 public partial class BaltimoreCityScraper : IRealPropertySearchScraper
 {
     private readonly IDataContext _dataContext;
+    private readonly IBlobService _blobService;
     private readonly BaltimoreCityDataServiceFactory _baltimoreCityDataServiceFactory;
     private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
     FirefoxDriver FirefoxDriver;
@@ -36,13 +40,13 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
     private readonly string GroundRentMetadataTable = @"//table[@id='cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucGroundRent_gv_GRRegistratonResult']";
     private readonly string PdfSaveFilePath = @"C:\Users\Jason\Desktop\GroundRentRegistrationPdfs\BACI\";
     private string BaseUrl { get; set; } = "https://sdat.dat.maryland.gov/RealProperty/Pages/default.aspx";
-    [GeneratedRegex("[^\\d+]")] private static partial Regex DateTimeFiledRegex();
+    [GeneratedRegex("[^\\d+]")] private static partial Regex DateTimeFiledRegex(); // In case I need it in future
     private enum ExceptionLog 
     { 
         TransactionFailAddressNotGroundRent,
-        TransactionFailCouldNotStoreMetadata,
         TransactionFailCouldNotStoreAddress,
-        TransactionFailCouldNotDownloadPdf,
+        TransactionFailCouldNotStoreMetadata,
+        TransactionFailCouldNotStorePdf,
         TransactionFailCouldNotDeleteAddress,
         DateTimeFiledIsNull
     }
@@ -54,10 +58,12 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
 
     public BaltimoreCityScraper(
         IDataContext dataContext,
+        IBlobService blobService,
         BaltimoreCityDataServiceFactory baltimoreCityDataServiceFactory,
         ExceptionLogDataServiceFactory exceptionLogDataServiceFactory)
     {
         _dataContext = dataContext;
+        _blobService = blobService;
         _baltimoreCityDataServiceFactory = baltimoreCityDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
 
@@ -167,7 +173,7 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
                         addressListIterationCount++;
                         AddressList.Remove(iterAddress);
                     }
-                    // There is an error tag that is different from the normal "no records exist" message
+                    // There must be an error tag that is different from the normal "no records exist" message
                     else
                     {
                         await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotDeleteAddress.ToString());
@@ -313,8 +319,16 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
                                         {
                                             // Download pdf, store locally (change later to blob db)
                                             PrintOptions printOptions = new();
-                                            FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
-                                            pdfDownloadCount++;
+                                            //FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
+                                            var printDocument = FirefoxDriver.Print(printOptions);
+                                            var pdfFileName = $"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
+                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, "BACI");
+                                            if (dbTransactionResult is true) pdfDownloadCount++;
+                                            if (dbTransactionResult is false)
+                                            {
+                                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                                allDataDownloaded = false;
+                                            }
                                             groundRentPdfModelList.RemoveAt(0);
                                             // Close pdf window and switch back to baseUrlWindow
                                             FirefoxDriver.Close();
@@ -322,7 +336,7 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
                                         }
                                         else
                                         {
-                                            await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotDownloadPdf.ToString());
+                                            await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
                                             allDataDownloaded = false;
                                         }
                                     }

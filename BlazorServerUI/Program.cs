@@ -1,13 +1,11 @@
+using DataLibrary;
 using DataLibrary.DbAccess;
 using DataLibrary.DbServices;
 using DataLibrary.AutoMapperProfiles;
 using DataLibrary.Services.SDATScrapers;
+using DataLibrary.Services.BlobService;
 using AutoMapper;
 using Serilog;
-using DataLibrary;
-using Microsoft.Extensions.Azure;
-using DataLibrary.Services.BlobService;
-using DataLibrary.Settings;
 
 namespace GroundRentProcessor;
 
@@ -29,12 +27,10 @@ public class Program
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog(Log.Logger);
             builder.Host.UseSerilog();
-            BlobSettings blobSettings = new();
-            configuration.GetSection("BlobSettings").Bind(blobSettings);
-            builder.Services.AddSingleton<BlobSettings>(blobSettings);
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            builder.Services.AddScoped<IDataContext>(s => new DataContext(configuration.GetConnectionString("Default")));
+            builder.Services.AddScoped<IDataContext>(o => new DataContext(configuration.GetConnectionString("Default")));
+            builder.Services.AddSingleton<IBlobService>(o => new BlobService(configuration.GetConnectionString("AzureBlobStorage")));
             //var dockerHost = Environment.GetEnvironmentVariable("DB_HOST");
             //var dockerName = Environment.GetEnvironmentVariable("DB_NAME");
             //var dockerPassword = Environment.GetEnvironmentVariable("DB_SA_PASSWORD");
@@ -67,18 +63,12 @@ public class Program
             //builder.Services.AddScoped<WashingtonCountyDataServiceFactory>();
             //builder.Services.AddScoped<WicomicoCountyDataServiceFactory>();
             //builder.Services.AddScoped<WorcesterCountyDataServiceFactory>();
-            builder.Services.AddScoped<BaltimoreCityScraper>();
+            builder.Services.AddScoped<IRealPropertySearchScraper, BaltimoreCityScraper>();
             builder.Services.AddAutoMapper(typeof(AutoMapperEntryPoint).Assembly);
             var mapper = new MapperConfiguration(options =>
             {
                 options.AddProfile<AddressProfile>();
             });
-            builder.Services.AddAzureClients(options =>
-            {
-                options.AddBlobServiceClient(configuration.GetConnectionString("AzureBlobStorage"));
-            });
-            builder.Services.AddSingleton<IBlobService, BlobService>();
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

@@ -25,10 +25,10 @@
 	<ItemGroup><ProjectReference Include="..\DataLibrary\DataLibrary.csproj" /></ItemGroup>
 	<ItemGroup>
 	  <Folder Include="wwwroot\data\zipData\" />
+	  <Folder Include="wwwroot\settings\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.15.0" />
-	  <PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.0" />
 	</ItemGroup>
 
 </Project>

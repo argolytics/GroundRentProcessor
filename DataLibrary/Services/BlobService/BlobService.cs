@@ -1,51 +1,29 @@
-﻿using DataLibrary.Settings;
-using DataLibrary.Models;
-using Azure.Storage.Blobs;
-using System.Text;
+﻿using Azure.Storage.Blobs;
+using OpenQA.Selenium;
 
 namespace DataLibrary.Services.BlobService;
 
 public class BlobService : IBlobService
 {
-    private readonly BlobServiceClient _blobServiceClient;
-    private readonly BlobSettings _blobSettings;
-    private readonly string _blobContainerClient;
+    private readonly string _connectionString;
 
-	public BlobService(BlobServiceClient blobServiceClient, BlobSettings blobSettings)
+	public BlobService(string connectionString)
 	{
-        _blobServiceClient = blobServiceClient;
-        _blobSettings = blobSettings;
-        _blobContainerClient= _blobSettings.BlobContainerClient;
+        _connectionString = connectionString;
     }
-    public async Task<BlobInfo> ReadBlob(string blobName)
+    public async Task<bool> UploadBlob(string blobName, PrintDocument printDocument, string containerName)
     {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerClient);
-        var blobClient = containerClient.GetBlobClient(blobName);
-        var blobDownloadInfo = await blobClient.DownloadAsync();
-        return new BlobInfo(blobDownloadInfo.Value.Content, blobDownloadInfo.Value.ContentType);
-    }
-    public async Task<IEnumerable<string>> ReadAllBlob()
-    {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerClient);
-        var blobItems = new List<string>();
-        await foreach(var blobItem in containerClient.GetBlobsAsync())
-        {
-            blobItems.Add(blobItem.Name);
+		try
+		{
+            var containerClient = new BlobContainerClient(_connectionString, containerName);
+            var blob = containerClient.GetBlobClient(blobName);
+            Stream stream = new MemoryStream(printDocument.AsByteArray);
+            await blob.UploadAsync(stream);
+            return true;
         }
-        return blobItems;
-    }
-    public async Task Upload(string content, string fileName)
-    {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerClient);
-        var blobClient = containerClient.GetBlobClient(fileName);
-        var bytes = Encoding.UTF8.GetBytes(content);
-        using var memoryStream = new MemoryStream(bytes);
-        await blobClient.UploadAsync(memoryStream);
-    }
-    public async Task Delete(string blobName)
-    {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerClient);
-        var blobClient = containerClient.GetBlobClient(blobName);
-        await blobClient.DeleteIfExistsAsync();
+		catch (Exception)
+		{
+            return false;
+		}
     }
 }

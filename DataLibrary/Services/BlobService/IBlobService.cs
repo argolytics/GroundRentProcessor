@@ -1,11 +1,8 @@
-﻿using DataLibrary.Models;
+﻿using OpenQA.Selenium;
 
 namespace DataLibrary.Services.BlobService;
 
 public interface IBlobService
 {
-    public Task<BlobInfo> ReadBlob(string blobName);
-    public Task<IEnumerable<string>> ReadAllBlob();
-    public Task Upload(string content, string fileName);
-    public Task Delete(string blobName);
+    public Task<bool> UploadBlob(string blobName, PrintDocument printDocument, string containerName);
 }

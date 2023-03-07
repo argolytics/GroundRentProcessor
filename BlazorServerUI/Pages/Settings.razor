@@ -1,0 +1,91 @@
+﻿@page "/settings"
+
+<PageTitle>Settings</PageTitle>
+<div class="row mb-3 mt-3">
+    @if (errors.Count > 0)
+    {
+        <h2>Errors</h2>
+        <ul class="text-danger">
+            @foreach (var error in errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="container mt-3">
+            <div>
+                <label>Upload Geckodriver executable here</label>
+                <InputFile OnChange="@LoadGeckodriver" class="form-control" accept=".exe" @bind-Value="GeckodriverFilePath"></InputFile>
+            </div>
+            <div>
+                <label>Upload Firefox Profile folder here</label>
+                <InputText OnChange="@LoadFirefoxProfile" class="form-control" @bind-Value="FirefoxProfilePath"></InputText>
+            </div>
+        </div>
+        <div class="container mt-3">
+            <div>
+                @Message
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string? GeckodriverFilePath;
+    private string? FirefoxProfilePath;
+    private long maxFileSize = 1024 * 1024 * 5;
+    private int maxAllowedFiles = 1;
+    private string Message = "";
+    private List<string> errors = new();
+
+    private void LoadGeckodriver(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+        if(e.FileCount > maxAllowedFiles)
+        {
+            errors.Add($"Error: Attempting to upload {e.FileCount}, but only {maxAllowedFiles} file(s) allowed.");
+            return;
+        }
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            try
+            {
+                GeckodriverFilePath = Path.GetFullPath(file.Name);
+                Message = $"{file.Name} uploaded successfully.";
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"File: {file.Name}. Error: {ex.Message}");
+            }
+        }
+    }
+    private void LoadFirefoxProfile(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+        if(e.FileCount > maxAllowedFiles)
+        {
+            errors.Add($"Error: Attempting to upload {e.FileCount}, but only {maxAllowedFiles} file(s) allowed.");
+            return;
+        }
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            // The Firefox profile is a folder, so if it has an extension then it is unacceptable
+            if (Path.GetExtension(file.Name) is not null)
+            {
+                errors.Add("Please select the folder, not the file.");
+                return;
+            }
+            try
+            {
+                FirefoxProfilePath = Path.GetFullPath(file.Name);
+                Message = $"{file.Name} uploaded successfully.";
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"File: {file.Name}. Error: {ex.Message}");
+            }
+        }
+    }
+}

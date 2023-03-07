@@ -302,7 +302,4 @@
     <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_UpdateAddress.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_UpdateGroundRentPdf.sql" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="GroundRentProcessorDb.publish.xml" />
-  </ItemGroup>
 </Project>
