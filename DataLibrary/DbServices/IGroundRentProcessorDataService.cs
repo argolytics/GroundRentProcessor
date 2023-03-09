@@ -4,7 +4,6 @@ namespace DataLibrary.DbServices
 {
     public interface IGroundRentProcessorDataService
     {
-        Task CreateOrUpdateFile(AddressModel addressModel);
         Task CreateOrUpdateSDATRedeemedFile(AddressModel addressModel);
         Task<bool> CreateAddress(AddressModel addressModel);
         Task<bool> UpdateAddress(AddressModel addressModel);

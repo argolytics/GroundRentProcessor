@@ -1,0 +1,1 @@
+﻿DBCC CHECKIDENT ('BaltimoreCity', RESEED, 0);

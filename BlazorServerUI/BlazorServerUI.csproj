@@ -7,7 +7,6 @@
 	</PropertyGroup>
 	
 	<ItemGroup>
-	  <Content Remove="Pages\Extract.razor" />
 	  <Content Remove="Pages\ScrapeBaltimoreCounty.razor" />
 	  <Content Remove="Pages\ScrapeCecilCounty.razor" />
 	  <Content Remove="Pages\ScrapeMontgomeryCounty.razor" />

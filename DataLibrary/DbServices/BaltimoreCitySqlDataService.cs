@@ -13,22 +13,22 @@ public class BaltimoreCitySqlDataService : IGroundRentProcessorDataService
     {
         _unitOfWork = unitOfWork;
     }
-    public async Task CreateOrUpdateFile(AddressModel addressModel)
-    {
-        var parms = new
-        {
-            addressModel.AccountId,
-            addressModel.County,
-            addressModel.Ward,
-            addressModel.Section,
-            addressModel.Block,
-            addressModel.Lot,
-            addressModel.LandUseCode,
-            addressModel.YearBuilt
-        };
-        await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_CreateOrUpdateFile", parms,
-            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
-    }
+    //public async Task CreateOrUpdateFile(AddressModel addressModel)
+    //{
+    //    var parms = new
+    //    {
+    //        addressModel.AccountId,
+    //        addressModel.County,
+    //        addressModel.Ward,
+    //        addressModel.Section,
+    //        addressModel.Block,
+    //        addressModel.Lot,
+    //        addressModel.LandUseCode,
+    //        addressModel.YearBuilt
+    //    };
+    //    await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_CreateOrUpdateFile", parms,
+    //        commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+    //}
     public async Task CreateOrUpdateSDATRedeemedFile(AddressModel addressModel)
     {
         return;
