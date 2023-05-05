@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[BaltimoreCityGroundRentPdf]
+﻿CREATE TABLE [dbo].[BACIGroundRentPdf]
 (
     [Id] INT IDENTITY(1,1) NOT NULL,
     [AddressId] INT NULL,
@@ -12,5 +12,5 @@
     [ClerkInitials] NVARCHAR(10) NULL, 
     [YearRecorded] SMALLINT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC),
-    CONSTRAINT [FK_BaltimoreCity_BaltimoreCityGroundRentPdf] FOREIGN KEY ([AddressId]) REFERENCES [dbo].[BaltimoreCity] ([Id]) ON DELETE CASCADE
+    CONSTRAINT [FK_BACI_BACIGroundRentPdf] FOREIGN KEY ([AddressId]) REFERENCES [dbo].[BACI] ([Id]) ON DELETE CASCADE
 )

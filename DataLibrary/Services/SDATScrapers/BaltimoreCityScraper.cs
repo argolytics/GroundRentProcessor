@@ -16,7 +16,7 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
 {
     private readonly IDataContext _dataContext;
     private readonly IBlobService _blobService;
-    private readonly BaltimoreCityDataServiceFactory _baltimoreCityDataServiceFactory;
+    private readonly BACIDataServiceFactory _baltimoreCityDataServiceFactory;
     private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
     FirefoxDriver FirefoxDriver;
     WebDriverWait WebDriverWait;
@@ -59,7 +59,7 @@ public partial class BaltimoreCityScraper : IRealPropertySearchScraper
     public BaltimoreCityScraper(
         IDataContext dataContext,
         IBlobService blobService,
-        BaltimoreCityDataServiceFactory baltimoreCityDataServiceFactory,
+        BACIDataServiceFactory baltimoreCityDataServiceFactory,
         ExceptionLogDataServiceFactory exceptionLogDataServiceFactory)
     {
         _dataContext = dataContext;

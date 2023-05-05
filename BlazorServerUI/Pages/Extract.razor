@@ -10,70 +10,69 @@
 @using System.Globalization
 @using System.Text.Json
 @using System.IO.Compression;
-@using DataLibrary.Services.SDATScrapers;
 @inject IDataContext dataContext
 @inject IMapper mapper
-@*@inject AlleganyCountyDataServiceFactory alleganyCountyDataServiceFactory
-@inject AnneArundelCountyDataServiceFactory anneArundelCountyDataServiceFactory*@
-@inject BaltimoreCityDataServiceFactory baltimoreCityDataServiceFactory
-@*@inject BaltimoreCountyDataServiceFactory baltimoreCountyDataServiceFactory
-@inject CalvertCountyDataServiceFactory calvertCountyDataServiceFactory
-@inject CarolineCountyDataServiceFactory carolineCountyDataServiceFactory
-@inject CarrollCountyDataServiceFactory carrollCountyDataServiceFactory
-@inject CecilCountyDataServiceFactory cecilCountyDataServiceFactory
-@inject CharlesCountyDataServiceFactory charlesCountyDataServiceFactory
-@inject DorchesterCountyDataServiceFactory dorchesterCountyDataServiceFactory
-@inject FrederickCountyDataServiceFactory frederickCountyDataServiceFactory
-@inject GarrettCountyDataServiceFactory garrettCountyDataServiceFactory
-@inject HarfordCountyDataServiceFactory harfordCountyDataServiceFactory
-@inject HowardCountyDataServiceFactory howardCountyDataServiceFactory
-@inject KentCountyDataServiceFactory kentCountyDataServiceFactory
-@inject MontgomeryCountyDataServiceFactory montgomeryCountyDataServiceFactory
-@inject PrinceGeorgesCountyDataServiceFactory princeGeorgesCountyDataServiceFactory
-@inject QueenAnnesCountyDataServiceFactory queenAnnesCountyDataServiceFactory
-@inject SomersetCountyDataServiceFactory somersetCountyDataServiceFactory
-@inject StMarysCountyDataServiceFactory stMarysCountyDataServiceFactory
-@inject TalbotCountyDataServiceFactory talbotCountyDataServiceFactory
-@inject WashingtonCountyDataServiceFactory washingtonCountyDataServiceFactory
-@inject WicomicoCountyDataServiceFactory wicomicoCountyDataServiceFactory
-@inject WorcesterCountyDataServiceFactory worcesterCountyDataServiceFactory*@
+@inject ALLEDataServiceFactory alleDataServiceFactory
+@inject ANNEDataServiceFactory anneDataServiceFactory
+@inject BACIDataServiceFactory baciDataServiceFactory
+@inject BACODataServiceFactory bacoDataServiceFactory
+@inject CALVDataServiceFactory calvDataServiceFactory
+@inject CARODataServiceFactory caroDataServiceFactory
+@inject CARRDataServiceFactory carrDataServiceFactory
+@inject CECIDataServiceFactory ceciDataServiceFactory
+@inject CHARDataServiceFactory charDataServiceFactory
+@inject DORCDataServiceFactory dorcDataServiceFactory
+@inject FREDDataServiceFactory fredDataServiceFactory
+@inject GARRDataServiceFactory garrDataServiceFactory
+@inject HARFDataServiceFactory harfDataServiceFactory
+@inject HOWADataServiceFactory howaDataServiceFactory
+@inject KENTDataServiceFactory kentDataServiceFactory
+@inject MONTDataServiceFactory montDataServiceFactory
+@inject PRINDataServiceFactory prinDataServiceFactory
+@inject QUEEDataServiceFactory queeDataServiceFactory
+@inject SOMEDataServiceFactory someDataServiceFactory
+@inject STMADataServiceFactory stmaDataServiceFactory
+@inject TALBDataServiceFactory talbDataServiceFactory
+@inject WASHDataServiceFactory washDataServiceFactory
+@inject WICODataServiceFactory wicoDataServiceFactory
+@inject WORCDataServiceFactory worcDataServiceFactory
 
 <div class="row mb-3 mt-3">
     <div class="container">
         <div>
-            <InputFile OnChange="OnInputFileChange" multiple></InputFile>
+            <InputFile OnChange="OnInputFileChange"></InputFile>
             <button class="btn btn-primary" type="submit" @onclick="UploadToLocal">UploadToLocal</button>
         </div>
         <div>
-            @*<button class="btn btn-secondary" type="submit" @onclick="ExtractALLE">ExtractALLE</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractANNE">ExtractANNE</button>*@
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractBACI">ExtractBACI</button>
-            @*<button class="btn btn-secondary" type="submit" @onclick="ExtractBACO">ExtractBACO</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractCALV">ExtractCALV</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractCARO">ExtractCARO</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractCARR">ExtractCARR</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractCECI">ExtractCECI</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractCHAR">ExtractCHAR</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractDORC">ExtractDORC</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractFRED">ExtractFRED</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractGARR">ExtractGARR</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractHARF">ExtractHARF</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractHOWA">ExtractHOWA</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractKENT">ExtractKENT</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractMONT">ExtractMONT</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractPRIN">ExtractPRIN</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractQUEE">ExtractQUEE</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractSOME">ExtractSOME</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractSTMA">ExtractSTMA</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractTALB">ExtractTALB</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractWASH">ExtractWASH</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractWICO">ExtractWICO</button>
-            <button class="btn btn-secondary" type="submit" @onclick="ExtractWORC">ExtractWORC</button>*@
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractALLE">Extract ALLE</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractANNE">Extract ANNE</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractBACI">Extract BACI</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractBACO">Extract BACO</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractCALV">Extract CALV</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractCARO">Extract CARO</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractCARR">Extract CARR</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractCECI">Extract CECI</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractCHAR">Extract CHAR</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractDORC">Extract DORC</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractFRED">Extract FRED</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractGARR">Extract GARR</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractHARF">Extract HARF</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractHOWA">Extract HOWA</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractKENT">Extract KENT</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractMONT">Extract MONT</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractPRIN">Extract PRIN</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractQUEE">Extract QUEE</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractSOME">Extract SOME</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractSTMA">Extract STMA</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractTALB">Extract TALB</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractWASH">Extract WASH</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractWICO">Extract WICO</button>
+            <button class="btn btn-secondary" type="submit" @onclick="ExtractWORC">Extract WORC</button>
         </div>
         @if(selectedFiles is not null)
         {
             <div class="row mb-3 mt-3">
-                @foreach (var file in files)
+                @foreach (var file in Files)
                 {
                     <div class="table-striped">
                         <p>@file.File.Name</p>
@@ -87,30 +86,30 @@
 
 @code {
     private IReadOnlyList<IBrowserFile>? selectedFiles;
-    private List<FileModel> files = new();
+    private List<FileModel> Files = new();
     private string Message = "No file(s) selected";
     private long maxAllowedBufferSize = 1024 * 1024 * 500;
     private int count = 0;
 
     private async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
-        if(files.Count > 0)
-        { 
-            files = new(); 
+        if (Files.Count > 0)
+        {
+            Files = new();
         }
         selectedFiles = e.GetMultipleFiles();
-        foreach(var selectedFile in selectedFiles)
+        foreach (var selectedFile in selectedFiles)
         {
             FileModel file = new();
             file.File = selectedFile;
-            files.Add(file);
+            Files.Add(file);
         }
-        Message = $"{files.Count} file(s) selected";
+        Message = $"{Files.Count} file(s) selected";
         this.StateHasChanged();
     }
     private async void UploadToLocal()
     {
-        foreach (var file in files)
+        foreach (var file in Files)
         {
             Stream stream = file.File.OpenReadStream(maxAllowedBufferSize);
             file.UploadPath = Directory.GetCurrentDirectory() + @"\wwwroot\data\" + "uploadId_" + Guid.NewGuid().ToString() + "_" + file.File.Name;
@@ -122,57 +121,14 @@
             stream.Dispose();
             Console.WriteLine($"{file.File.Name} upload complete.");
         }
-        Message = $"{files.Count} file(s) uploaded on server";
+        Message = $"{Files.Count} file(s) uploaded on server";
         this.StateHasChanged();
     }
-    //private async void ExtractALLE()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var alleganyCountyDataService = alleganyCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await alleganyCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractANNE()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var anneArundelCountyDataService = anneArundelCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await anneArundelCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    private async void ExtractBACI()
+    private async Task ExtractJsonFile(IGroundRentProcessorDataServiceFactory groundRentProcessorDataServiceFactory, string county)
     {
-        foreach (var file in files)
+        foreach (var file in Files)
         {
+            count = 0;
             using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
             {
                 var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
@@ -182,11 +138,11 @@
                     {
                         var addressModel = mapper.Map<AddressModel>(dto);
                         var noSpacesAccountNumber = addressModel.AccountNumber.Replace(" ", "");
-                        var baltimoreCityDataService = baltimoreCityDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-                        await baltimoreCityDataService.CreateAddress(new AddressModel()
+                        var dataService = groundRentProcessorDataServiceFactory.CreateGroundRentProcessorDataService(uow);
+                        await dataService.CreateAddress(new AddressModel()
                             {
                                 AccountId = addressModel.AccountId,
-                                County = "BACI",
+                                County = county,
                                 AccountNumber = noSpacesAccountNumber,
                                 Ward = addressModel.Ward,
                                 Section = addressModel.Section,
@@ -204,671 +160,31 @@
                 }
             }
             File.Delete(file.UploadPath);
-            Console.WriteLine($"Processing complete. Count: {count}.");
+            Console.WriteLine($"Processing complete. {county} address count: {count}.");
         }
     }
-    //private async void ExtractBACO()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var baltimoreCountyDataService = baltimoreCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await baltimoreCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractCALV()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var calvertCountyDataService = calvertCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await calvertCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractCARO()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var carolineCountyDataService = carolineCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await carolineCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractCARR()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var carrollCountyDataService = carrollCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await carrollCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractCECI()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var cecilCountyDataService = cecilCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await cecilCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractCHAR()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var charlesCountyDataService = charlesCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await charlesCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractDORC()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var dorchesterCountyDataService = dorchesterCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await dorchesterCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractFRED()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var frederickCountyDataService = frederickCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await frederickCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractGARR()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var garrettCountyDataService = garrettCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await garrettCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractHARF()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var harfordCountyDataService = harfordCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await harfordCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractHOWA()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var howardCountyDataService = howardCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await howardCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractKENT()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var kentCountyDataService = kentCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await kentCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractMONT()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var montgomeryCountyDataService = montgomeryCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await montgomeryCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractPRIN()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var princeGeorgesCountyDataService = princeGeorgesCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await princeGeorgesCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractQUEE()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var queenAnnesCountyDataService = queenAnnesCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await queenAnnesCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractSOME()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var somersetCountyDataService = somersetCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await somersetCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractSTMA()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var stMarysCountyDataService = stMarysCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await stMarysCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractTALB()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var talbotCountyDataService = talbotCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await talbotCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractWASH()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var washingtonCountyDataService = washingtonCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await washingtonCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractWICO()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var wicomicoCountyDataService = wicomicoCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await wicomicoCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ExtractWORC()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach (var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var worcesterCountyDataService = worcesterCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await worcesterCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
-    //private async void ProcessAdobePDF()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        var uploadUriResponse = await getUploadUri.Upload();
-    //        var uploadUriResponseString = await uploadUriResponse.Content.ReadAsStringAsync();
-    //        var uploadUriResponseObject = JsonSerializer.Deserialize<FileModel>(uploadUriResponseString);
-    //        file.UploadUri = uploadUriResponseObject.UploadUri;
-    //        file.AssetId = uploadUriResponseObject.AssetId;
-    //        var resup = await uploadPdf.Upload(file).ConfigureAwait(false);
-    //        var resUpString = await resup.Content.ReadAsStringAsync();
-    //        var resExt = await extractPdf.Extract(file).ConfigureAwait(false);
-    //        file.DownloadCheckLocation = resExt.Headers.Location;
-    //        var resExtString = await resExt.Content.ReadAsStringAsync();
-    //        JobStatusModel jsm;
-    //        do
-    //        {
-    //            await Task.Delay(10000);
-    //            var getDownloadStatusResponse = await getDownloadStatus.GetStatus(file).ConfigureAwait(false);
-    //            var getDownloadStatusResponseString = await getDownloadStatusResponse.Content.ReadAsStringAsync();
-    //            jsm = JsonSerializer.Deserialize<JobStatusModel>(getDownloadStatusResponseString);
-    //        } 
-    //        while (jsm.Status != "done");
-
-    //        file.DownloadUri = jsm.Resource.DownloadUri;
-    //        var fileResponse = await downloadPdf.Download(file).ConfigureAwait(false);
-    //        var data = await fileResponse.Content.ReadAsByteArrayAsync();
-    //        file.ZipPath = file.UploadPath.Replace(".pdf", ".zip");
-
-    //        using var memStream = new MemoryStream(data);
-    //        using var filestream = new FileStream(file.ZipPath, FileMode.Create);
-    //        await memStream.CopyToAsync(filestream);
-    //        filestream.Close();
-
-    //        ZipFile.ExtractToDirectory(file.ZipPath, Directory.GetCurrentDirectory() + @"\wwwroot\data\zipData\");
-    //        File.Delete(file.UploadPath);
-    //        File.Delete(file.ZipPath);
-    //        File.Delete(@"C:\Users\Jason\source\repos\AdobePdfProcessorApp\AdobePdfProcessor\wwwroot\data\zipData\structuredData.json");
-
-    //        file.CsvPath = Directory.GetCurrentDirectory() + @"\wwwroot\data\zipData\tables\" + "fileoutpart0.csv";
-    //        using (var streamReader = new StreamReader(file.CsvPath))
-    //        {
-    //            using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
-    //            {
-    //                while (csvReader.Read())
-    //                {
-    //                    using (var uow = dataContext.CreateUnitOfWork())
-    //                    {
-    //                        if (csvReader.Parser.RawRow > 0)
-    //                        {
-    //                            var rowArray = csvReader.Parser.RawRecord.Split(',');
-    //                            var accountId = rowArray[0].Replace(" ", "");
-    //                            bool isRedeemed;
-    //                            if (rowArray[2].Contains("PAY"))
-    //                            {
-    //                                isRedeemed = true;
-    //                            }
-    //                            else
-    //                            {
-    //                                isRedeemed = false; 
-    //                            }
-    //                            var groundRentProcessorDataService = groundRentProcessorDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                            await groundRentProcessorDataService.CreateOrUpdateSDATRedeemedFile(new AddressModel()
-    //                                {
-    //                                    AccountId = accountId,
-    //                                    IsRedeemed = isRedeemed
-    //                                });
-    //                        }
-    //                        else
-    //                        {
-    //                            continue;
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        var tableDirectory = new DirectoryInfo(Directory.GetCurrentDirectory() + @"\wwwroot\data\zipData\tables\");
-    //        tableDirectory.Delete(true);
-    //    }
-    //}
-    //private async void ProcessBaltimoreCity()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (var streamReader = new StreamReader(file.UploadPath))
-    //        {
-    //            using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
-    //            {
-    //                csvReader.Read();
-
-    //                while (csvReader.Read())
-    //                {
-    //                    using (var uow = dataContext.CreateUnitOfWork())
-    //                    {
-    //                        var landUseCode = csvReader.Parser.RawRecord.Substring(428, 1);
-    //                        var yearBuiltString = csvReader.Parser.RawRecord.Substring(1577, 4);
-    //                        var yearBuilt = int.TryParse(yearBuiltString, out int yearBuiltInt);
-
-    //                        if (yearBuiltInt >= 2015 &&
-    //                            (landUseCode == "E" || landUseCode == "R"))
-    //                        {
-    //                            var accountId = csvReader.Parser.RawRecord.Substring(2, 16).Replace(" ", "");
-    //                            var ward = csvReader.Parser.RawRecord.Substring(2, 2).Replace(" ", "");
-    //                            var section = csvReader.Parser.RawRecord.Substring(390, 2).Replace(" ", "");
-    //                            var block = csvReader.Parser.RawRecord.Substring(392, 5).Replace(" ", "");
-    //                            var lot = csvReader.Parser.RawRecord.Substring(398, 4).Replace(" ", "");
-
-    //                            //var groundRentProcessorDataService = groundRentProcessorDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                            //await groundRentProcessorDataService.CreateOrUpdateSpecPrintFile(
-    //                            //new AddressModel()
-    //                            //    {
-    //                            //        AccountId = accountId,
-    //                            //        Ward = ward,
-    //                            //        Section = section,
-    //                            //        Block = block,
-    //                            //        Lot = lot,
-    //                            //        LandUseCode = landUseCode,
-    //                            //        YearBuilt = yearBuiltInt
-    //                            //    });
-    //                        }
-    //                        else
-    //                        {
-    //                            continue;
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine("Processing complete.");
-    //    }
-    //}
-    //private async void ProcessMontgomeryCounty()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (var streamReader = new StreamReader(file.UploadPath))
-    //        {
-    //            using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
-    //            {
-    //                csvReader.Read();
-
-    //                while (csvReader.Read())
-    //                {
-    //                    using (var uow = dataContext.CreateUnitOfWork())
-    //                    {
-    //                        var rowArray = csvReader.Parser.RawRecord.Split(',');
-    //                        var landUseCode = rowArray[2];
-
-    //                        if (landUseCode == "E" || landUseCode == "R")
-    //                        {
-    //                            var accountNumber = rowArray[0];
-    //                            var ward = rowArray[1];
-    //                            var yearBuiltString = rowArray[3];
-    //                            var yearBuilt = int.TryParse(yearBuiltString, out int yearBuiltInt);
-    //                            var accountId = "16" + ward + accountNumber;
-
-    //                            var montgomeryCountyDataService = montgomeryCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                            await montgomeryCountyDataService.CreateOrUpdateFile(
-    //                            new AddressModel()
-    //                                {
-    //                                    AccountId = accountId,
-    //                                    AccountNumber = accountNumber,
-    //                                    Ward = ward,
-    //                                    LandUseCode = landUseCode,
-    //                                    YearBuilt = yearBuiltInt
-    //                                });
-    //                        }
-    //                        else
-    //                        {
-    //                            continue;
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine("Processing complete.");
-    //    }
-    //}
-    //private async void ProcessCecilCounty()
-    //{
-    //    foreach (var file in files)
-    //    {
-    //        using (FileStream fileStream = new FileStream(file.UploadPath, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var addressDto = JsonSerializer.Deserialize<AddressDto[]>(fileStream);
-    //            using (var uow = dataContext.CreateUnitOfWork())
-    //            {
-    //                foreach(var dto in addressDto)
-    //                {
-    //                    var addressModel = mapper.Map<AddressModel>(dto);
-    //                    var cecilCountyDataService = cecilCountyDataServiceFactory.CreateGroundRentProcessorDataService(uow);
-    //                    await cecilCountyDataService.CreateOrUpdateFile(addressModel);
-    //                    count++;
-    //                }
-    //            }
-    //        }
-    //        File.Delete(file.UploadPath);
-    //        Console.WriteLine($"Processing complete. Count: {count}.");
-    //    }
-    //}
+    private async void ExtractALLE() => await ExtractJsonFile(alleDataServiceFactory, "ALLE");
+    private async void ExtractANNE() => await ExtractJsonFile(anneDataServiceFactory, "ANNE");
+    private async void ExtractBACI() => await ExtractJsonFile(baciDataServiceFactory, "BACI");
+    private async void ExtractBACO() => await ExtractJsonFile(bacoDataServiceFactory, "BACO");
+    private async void ExtractCALV() => await ExtractJsonFile(calvDataServiceFactory, "CALV");
+    private async void ExtractCARO() => await ExtractJsonFile(caroDataServiceFactory, "CARO");
+    private async void ExtractCARR() => await ExtractJsonFile(carrDataServiceFactory, "CARR");
+    private async void ExtractCECI() => await ExtractJsonFile(ceciDataServiceFactory, "CECI");
+    private async void ExtractCHAR() => await ExtractJsonFile(charDataServiceFactory, "CHAR");
+    private async void ExtractDORC() => await ExtractJsonFile(dorcDataServiceFactory, "DORC");
+    private async void ExtractFRED() => await ExtractJsonFile(fredDataServiceFactory, "FRED");
+    private async void ExtractGARR() => await ExtractJsonFile(garrDataServiceFactory, "GARR");
+    private async void ExtractHARF() => await ExtractJsonFile(harfDataServiceFactory, "HARF");
+    private async void ExtractHOWA() => await ExtractJsonFile(howaDataServiceFactory, "HOWA");
+    private async void ExtractKENT() => await ExtractJsonFile(kentDataServiceFactory, "KENT");
+    private async void ExtractMONT() => await ExtractJsonFile(montDataServiceFactory, "MONT");
+    private async void ExtractPRIN() => await ExtractJsonFile(prinDataServiceFactory, "PRIN");
+    private async void ExtractQUEE() => await ExtractJsonFile(queeDataServiceFactory, "QUEE");
+    private async void ExtractSOME() => await ExtractJsonFile(someDataServiceFactory, "SOME");
+    private async void ExtractSTMA() => await ExtractJsonFile(stmaDataServiceFactory, "STMA");
+    private async void ExtractTALB() => await ExtractJsonFile(talbDataServiceFactory, "TALB");
+    private async void ExtractWASH() => await ExtractJsonFile(washDataServiceFactory, "WASH");
+    private async void ExtractWICO() => await ExtractJsonFile(wicoDataServiceFactory, "WICO");
+    private async void ExtractWORC() => await ExtractJsonFile(worcDataServiceFactory, "WORC");
 }

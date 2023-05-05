@@ -150,10 +150,10 @@
     <Build Include="dbo\Tables\BaltimoreCounty.sql" />
     <Build Include="dbo\Tables\MontgomeryCounty.sql" />
     <Build Include="dbo\Tables\GroundRentAllCounties.sql" />
-    <Build Include="dbo\Tables\BaltimoreCity.sql" />
+    <Build Include="dbo\Tables\BACI.sql" />
     <Build Include="dbo\Tables\BackUp.sql" />
     <Build Include="dbo\Tables\CecilCounty.sql" />
-    <Build Include="dbo\Tables\BaltimoreCityGroundRentPdf.sql" />
+    <Build Include="dbo\Tables\BACIGroundRentPdf.sql" />
     <Build Include="dbo\Tables\AlleganyCounty.sql" />
     <Build Include="dbo\Tables\AnneArundelCounty.sql" />
     <Build Include="dbo\Tables\CalvertCounty.sql" />
@@ -301,5 +301,8 @@
     <Build Include="dbo\Stored Procedures\ExceptionLog\spExceptionLog_Delete.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_UpdateAddress.sql" />
     <Build Include="dbo\Stored Procedures\BaltimoreCity\spBaltimoreCity_UpdateGroundRentPdf.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="GroundRentProcessorDb.publish.xml" />
   </ItemGroup>
 </Project>

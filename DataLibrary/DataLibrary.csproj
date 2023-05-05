@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\SDATScrapers\**" />
+    <EmbeddedResource Remove="Services\SDATScrapers\**" />
+    <None Remove="Services\SDATScrapers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="DbServices\AlleganyCountyDataServiceFactory.cs" />
     <Compile Remove="DbServices\AlleganyCountySqlDataService.cs" />
     <Compile Remove="DbServices\AnneArundelCountyDataServiceFactory.cs" />
@@ -54,9 +60,6 @@
     <Compile Remove="DbServices\WicomicoCountySqlDataService.cs" />
     <Compile Remove="DbServices\WorcesterCountyDataServiceFactory.cs" />
     <Compile Remove="DbServices\WorcesterCountySqlDataService.cs" />
-    <Compile Remove="Services\SDATScrapers\BaltimoreCountyScraper.cs" />
-    <Compile Remove="Services\SDATScrapers\CecilCountyScraper.cs" />
-    <Compile Remove="Services\SDATScrapers\MontgomeryCountyScraper.cs" />
   </ItemGroup>
 
   <ItemGroup>
