@@ -27,8 +27,5 @@
 	  <Folder Include="wwwroot\data\zipData\" />
 	  <Folder Include="wwwroot\settings\" />
 	</ItemGroup>
-	<ItemGroup>
-	  <PackageReference Include="Azure.Storage.Blobs" Version="12.15.0" />
-	</ItemGroup>
 
 </Project>
